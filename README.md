@@ -138,7 +138,7 @@ SMTP_PASSWORD=your-app-password
 DEBUG=True
 ```
 
-## 🗄 Database Setup
+## Database Setup
 
 ### Using PostgreSQL
 
@@ -180,6 +180,6 @@ DEBUG=True
    - Tailwind V4 absolutely LOVES to refuse to load/compile
    - If at any point you run the app and all styling just dissapears (if the app looks terrible), delete the .next folder in your IDE and re-run the app. This should fix the styling issues.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
