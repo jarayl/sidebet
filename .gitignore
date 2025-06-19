@@ -39,3 +39,112 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# User-uploaded files
+/uploads/
+backend/uploads/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+database.db
+*.sql
+/database/
+backend/database.db
+
+# Python virtual environment
+backend/venv/
+backend/.venv/
+backend/env/
+backend/.env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python environment files
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.test
+backend/.env.production
+backend/config.ini
+backend/settings.ini
+
+# Logs
+logs/
+*.log
+backend/logs/
+backend/*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+backend/tmp/
+
+# Security and secrets
+*.key
+*.pem
+*.p12
+*.crt
+*.cer
+*.p7b
+*.p7r
+*.spc
+*.pfx
+secrets/
+backend/secrets/
+cookies.txt
+backend/cookies.txt
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Test coverage
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+
+# Local development
+.local/
+local/
