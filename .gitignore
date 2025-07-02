@@ -38,8 +38,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/src/generated/prisma
-
 # User-uploaded files
 /uploads/
 backend/uploads/
@@ -156,3 +154,4 @@ test_*.py
 local/
 
 .cursorrules
+backend_schema.txt
