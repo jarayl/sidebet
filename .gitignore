@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# deps
 /node_modules
 /.pnp
 .pnp.*
@@ -156,3 +154,5 @@ test_*.py
 # Local development
 .local/
 local/
+
+.cursorrules
