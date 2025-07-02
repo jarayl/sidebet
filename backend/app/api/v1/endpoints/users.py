@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Query
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import os
 import uuid
@@ -7,6 +7,9 @@ from pathlib import Path
 import logging
 
 from app.models.user import User
+from app.models.position import Position
+from app.models.contract import Contract
+from app.models.market import Market
 from app.schemas.user import UserCreate, UserResponse, UserProfileUpdate, PasswordUpdate
 from app.schemas.auth import UserResponse as AuthUserResponse
 from app.api import deps
@@ -53,6 +56,41 @@ def read_user_me(
     Get current user.
     """
     return current_user
+
+@router.get("/balance")
+def get_user_balance(
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Get user's current trading balance.
+    """
+    return {
+        "balance": current_user.balance,
+        "balance_usd": f"${current_user.balance / 100:.2f}"  # Convert cents to dollars
+    }
+
+@router.post("/balance/add")
+def add_balance(
+    balance_data: dict,
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db),
+):
+    """
+    Add fake currency to user's balance (for testing purposes).
+    Amount should be in cents.
+    """
+    amount = balance_data.get("amount", 0)
+    if amount <= 0 or amount > 100000:  # Max $1000 at a time
+        raise HTTPException(status_code=400, detail="Amount must be between 1 and 100000 cents")
+    
+    current_user.balance += amount
+    db.commit()
+    
+    return {
+        "message": f"Added ${amount / 100:.2f} to balance",
+        "new_balance": current_user.balance,
+        "new_balance_usd": f"${current_user.balance / 100:.2f}"
+    }
 
 @router.put("/profile", response_model=AuthUserResponse)
 async def update_profile(
@@ -211,3 +249,78 @@ def delete_account(
     db.commit()
     
     return {"message": "Account deleted successfully"} 
+
+@router.get("/positions")
+def get_user_positions(
+    market_id: Optional[int] = Query(None, description="Filter positions by market ID"),
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db),
+):
+    """
+    Get user's positions, optionally filtered by market.
+    """
+    query = db.query(Position).options(
+        joinedload(Position.contract).joinedload(Contract.market)
+    ).filter(
+        Position.user_id == current_user.user_id,
+        Position.quantity != 0  # Only show non-zero positions
+    )
+    
+    if market_id:
+        query = query.join(Contract).filter(Contract.market_id == market_id)
+    
+    positions = query.all()
+    
+    result = []
+    for position in positions:
+        result.append({
+            "contract_id": position.contract_id,
+            "contract_title": position.contract.title,
+            "contract_side": position.contract_side,
+            "quantity": position.quantity,
+            "avg_price": str(position.avg_price),
+            "market_id": position.contract.market.market_id,
+            "market_title": position.contract.market.title,
+        })
+    
+    return result 
+
+@router.get("/search")
+def search_users(
+    q: str = Query(..., min_length=1, max_length=50),
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+    limit: int = Query(10, le=20),
+):
+    """
+    Search for users by username with fuzzy matching.
+    """
+    # Use ILIKE for case-insensitive partial matching
+    users = db.query(User).filter(
+        User.username.ilike(f"%{q}%")
+    ).filter(
+        User.is_active == True
+    ).limit(limit).all()
+    
+    # Sort by relevance (exact matches first, then by username length)
+    def relevance_score(user):
+        username_lower = user.username.lower()
+        query_lower = q.lower()
+        
+        if username_lower == query_lower:
+            return 0  # Exact match
+        elif username_lower.startswith(query_lower):
+            return 1  # Starts with query
+        else:
+            return 2  # Contains query
+    
+    users.sort(key=relevance_score)
+    
+    return [
+        {
+            "user_id": user.user_id,
+            "username": user.username,
+            "profile_picture": user.profile_picture,
+        }
+        for user in users
+    ] 

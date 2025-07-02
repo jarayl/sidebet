@@ -22,9 +22,9 @@ def get_ideas(
     current_user: User = Depends(deps.get_current_user),
     skip: int = 0,
     limit: int = 20,
-    filter_type: str = Query("home", regex="^(home|trending|bookmarked|replies)$"),
+    filter_type: str = Query("home", regex="^(home|trending|bookmarked|replies|following)$"),
 ):
-    """Get ideas with different filters"""
+    """Get ideas with different filters for market builder forum"""
     query = db.query(Idea).options(joinedload(Idea.submitted_by_user))
     
     if filter_type == "trending":
@@ -36,6 +36,12 @@ def get_ideas(
     elif filter_type == "replies":
         # Show ideas where user has commented
         query = query.join(IdeaComment).filter(IdeaComment.user_id == current_user.user_id)
+    elif filter_type == "following":
+        # Show ideas from users that current user follows
+        from app.models.user_follow import UserFollow
+        query = query.join(UserFollow, Idea.submitted_by == UserFollow.following_id).filter(
+            UserFollow.follower_id == current_user.user_id
+        ).order_by(desc(Idea.created_at))
     else:  # home
         query = query.order_by(desc(Idea.created_at))
     
@@ -57,7 +63,8 @@ def get_ideas(
             "comments_count": idea.comments_count,
             "submitted_by_user": {
                 "user_id": idea.submitted_by_user.user_id,
-                "username": idea.submitted_by_user.username
+                "username": idea.submitted_by_user.username,
+                "profile_picture": idea.submitted_by_user.profile_picture
             } if idea.submitted_by_user else None,
             "is_liked": db.query(IdeaLike).filter(
                 IdeaLike.user_id == current_user.user_id,
@@ -104,7 +111,8 @@ def create_idea(
         "comments_count": idea.comments_count,
         "submitted_by_user": {
             "user_id": idea.submitted_by_user.user_id,
-            "username": idea.submitted_by_user.username
+            "username": idea.submitted_by_user.username,
+            "profile_picture": idea.submitted_by_user.profile_picture
         } if idea.submitted_by_user else None,
         "is_liked": False,
         "is_bookmarked": False,
@@ -134,7 +142,8 @@ def get_idea(
             "created_at": comment.created_at,
             "user": {
                 "user_id": comment.user.user_id,
-                "username": comment.user.username
+                "username": comment.user.username,
+                "profile_picture": comment.user.profile_picture
             }
         })
     
@@ -151,7 +160,8 @@ def get_idea(
         "comments_count": idea.comments_count,
         "submitted_by_user": {
             "user_id": idea.submitted_by_user.user_id,
-            "username": idea.submitted_by_user.username
+            "username": idea.submitted_by_user.username,
+            "profile_picture": idea.submitted_by_user.profile_picture
         } if idea.submitted_by_user else None,
         "is_liked": db.query(IdeaLike).filter(
             IdeaLike.user_id == current_user.user_id,
@@ -267,6 +277,7 @@ def create_comment(
         "created_at": comment.created_at,
         "user": {
             "user_id": comment.user.user_id,
-            "username": comment.user.username
+            "username": comment.user.username,
+            "profile_picture": comment.user.profile_picture
         }
     } 

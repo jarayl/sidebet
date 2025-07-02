@@ -26,7 +26,7 @@ def create_performance_indexes():
         
         # Contracts table indexes
         "CREATE INDEX IF NOT EXISTS idx_contracts_market_id ON contracts (market_id);",
-        "CREATE INDEX IF NOT EXISTS idx_contracts_market_outcome ON contracts (market_id, outcome);",
+        "CREATE INDEX IF NOT EXISTS idx_contracts_market_status ON contracts (market_id, status);",
     ]
     
     with engine.connect() as conn:

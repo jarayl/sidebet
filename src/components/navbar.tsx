@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchBar } from "@/components/search-bar";
 
 interface UserType {
   email?: string;
@@ -82,8 +83,9 @@ export function Navbar({ user }: NavbarProps) {
           })}
         </div>
 
-        {/* RIGHT: User Dropdown or Login */}
-        <div className="flex items-center">
+        {/* RIGHT: Search + User Dropdown or Login */}
+        <div className="flex items-center gap-4">
+          {user && <SearchBar />}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -98,9 +100,11 @@ export function Navbar({ user }: NavbarProps) {
                       className="w-11 h-11 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-11 h-11 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-gray-600" />
-                    </div>
+                    <img
+                      src="/default_icon.jpg"
+                      alt={user.username}
+                      className="w-11 h-11 rounded-full object-cover"
+                    />
                   )}
                   <ChevronDown className="w-5 h-5 text-gray-500" />
                 </Button>

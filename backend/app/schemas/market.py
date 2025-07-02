@@ -9,10 +9,21 @@ class MarketStatus(str, Enum):
     RESOLVED = "resolved"
     CANCELLED = "cancelled"
 
-class MarketResult(str, Enum):
-    YES = "YES"
-    NO = "NO"
-    UNDECIDED = "UNDECIDED"
+class ContractOption(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+class ContractResponse(BaseModel):
+    contract_id: int
+    title: str
+    description: Optional[str] = None
+    status: str
+    resolution: Optional[str] = None
+    # Market data for each side
+    yes_price: Optional[str] = None
+    no_price: Optional[str] = None
+    yes_volume: Optional[int] = None
+    no_volume: Optional[int] = None
 
 class MarketBase(BaseModel):
     title: str
@@ -24,7 +35,7 @@ class MarketBase(BaseModel):
     resolve_time: Optional[datetime] = None
 
 class MarketCreate(MarketBase):
-    pass
+    contracts: List[ContractOption] = []
 
 class MarketUpdate(BaseModel):
     title: Optional[str] = None
@@ -35,13 +46,12 @@ class MarketUpdate(BaseModel):
     close_time: Optional[datetime] = None
     resolve_time: Optional[datetime] = None
     status: Optional[MarketStatus] = None
-    result: Optional[MarketResult] = None
 
 class MarketResponse(MarketBase):
     market_id: int
     status: MarketStatus
-    result: Optional[MarketResult] = None
     is_bookmarked: Optional[bool] = False
+    contracts: Optional[List[ContractResponse]] = None
 
     class Config:
         from_attributes = True 

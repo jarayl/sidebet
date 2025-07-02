@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Numeric, ForeignKey, CheckConstraint, UniqueConstraint
+from sqlalchemy import Column, BigInteger, String, Text, CheckConstraint, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
@@ -7,13 +7,17 @@ class Contract(Base):
 
     contract_id = Column(BigInteger, primary_key=True, index=True)
     market_id = Column(BigInteger, ForeignKey("markets.market_id", ondelete="CASCADE"), nullable=False, index=True)
-    outcome = Column(String(20), nullable=False)  # e.g., 'YES'
-    initial_price = Column(Numeric(6, 4))  # 0–1 inclusive
+    title = Column(String(200), nullable=False)  # e.g., "Person A will be head coach"
+    description = Column(Text)  # Detailed description of what this contract represents
+    status = Column(String(12), default='open', nullable=False)  # 'open', 'closed', 'resolved'
+    resolution = Column(String(3))  # 'YES' or 'NO' when resolved, NULL when unresolved
     
-    # Add check constraint for price range
+    # Add check constraints
     __table_args__ = (
-        CheckConstraint("initial_price BETWEEN 0 AND 1", name='check_initial_price_range'),
-        UniqueConstraint('market_id', 'outcome', name='unique_market_outcome'),
+        CheckConstraint("status IN ('open', 'closed', 'resolved')", name='check_contract_status'),
+        CheckConstraint("resolution IN ('YES', 'NO')", name='check_contract_resolution'),
+        # Ensure contract titles are unique within a market
+        UniqueConstraint('market_id', 'title', name='unique_market_contract_title'),
     )
     
     # Relationships - using string references to avoid circular imports

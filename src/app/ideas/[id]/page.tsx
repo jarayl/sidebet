@@ -5,7 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, MessageCircle, Bookmark, Share, ArrowLeft, MoreHorizontal, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Heart, MessageCircle, Bookmark, ArrowLeft, MoreHorizontal, Trash2, CheckCircle, Clock, XCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { IdeaDetail, IdeaComment, UserInfo } from "@/lib/types";
 
@@ -65,6 +66,34 @@ export default function IdeaDetailPage() {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <Clock className="w-4 h-4 mr-2" />
+            Under Review
+          </Badge>
+        );
+      case 'accepted':
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Accepted
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+            <XCircle className="w-4 h-4 mr-2" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return null;
+    }
   };
 
   const handleAction = async (url: string) => {
@@ -130,7 +159,7 @@ export default function IdeaDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar user={user} />
-        <div className="text-center p-8">Idea not found.</div>
+        <div className="text-center p-8">Market idea not found.</div>
       </div>
     );
   }
@@ -146,14 +175,26 @@ export default function IdeaDetailPage() {
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold text-gray-900">Idea</h1>
+          <h1 className="text-xl font-bold text-gray-900">Market Idea</h1>
         </header>
 
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-start space-x-4 mb-4">
-            <div className="w-12 h-12 bg-orange-500 rounded-full flex-shrink-0 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">{idea.submitted_by_user?.username?.charAt(0).toUpperCase()}</span>
-            </div>
+            {idea.submitted_by_user?.profile_picture ? (
+              <img
+                src={`http://localhost:8000${idea.submitted_by_user.profile_picture}`}
+                alt={idea.submitted_by_user.username}
+                className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
+              />
+            ) : (
+              <img
+                src="/default_icon.jpg"
+                alt={idea.submitted_by_user?.username || "User"}
+                className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
+              />
+            )}
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
             <div>
               <p 
                 className="font-bold text-gray-900 hover:underline cursor-pointer"
@@ -166,14 +207,23 @@ export default function IdeaDetailPage() {
                 {idea.submitted_by_user?.username}
               </p>
               <p className="text-sm text-gray-500">@{idea.submitted_by_user?.username}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {getStatusBadge(idea.status)}
+                </div>
+              </div>
             </div>
           </div>
 
-          <p className="text-xl my-4 text-gray-900">{idea.title}</p>
-          {idea.description && <p className="text-base text-gray-700 my-4">{idea.description}</p>}
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">{idea.title}</h2>
+            {idea.description && (
+              <p className="text-base text-gray-700 leading-relaxed">{idea.description}</p>
+            )}
+          </div>
           
           <p className="text-sm text-gray-500 border-b border-gray-200 pb-4">
-            {formatFullDate(idea.created_at)}
+            Submitted {formatFullDate(idea.created_at)}
           </p>
 
           <div className="flex items-center space-x-6 py-3 border-b border-gray-200">
@@ -183,7 +233,7 @@ export default function IdeaDetailPage() {
             </div>
             <div className="flex items-center space-x-2">
               <span className="font-bold">{idea.comments_count}</span>
-              <span className="text-gray-500">Replies</span>
+              <span className="text-gray-500">Comments</span>
             </div>
           </div>
 
@@ -191,18 +241,27 @@ export default function IdeaDetailPage() {
             <ActionButton icon={MessageCircle} hoverColor="hover:text-blue-500" />
             <ActionButton icon={Heart} isActive={idea.is_liked} activeColor="text-red-500" hoverColor="hover:text-red-500" onClick={() => handleAction(`http://localhost:8000/api/v1/ideas/${idea.idea_id}/like`)} />
             <ActionButton icon={Bookmark} isActive={idea.is_bookmarked} activeColor="text-yellow-500" hoverColor="hover:text-yellow-500" onClick={() => handleAction(`http://localhost:8000/api/v1/ideas/${idea.idea_id}/bookmark`)} />
-            <ActionButton icon={Share} hoverColor="hover:text-green-500" />
           </div>
         </div>
 
         <div className="p-4 border-b border-gray-200">
           <form onSubmit={handleSubmitComment} className="flex items-start space-x-4">
-            <div className="w-11 h-11 bg-orange-500 rounded-full flex-shrink-0 flex items-center justify-center">
-              <span className="text-white font-semibold">{userInitial}</span>
-            </div>
+            {user?.profile_picture ? (
+              <img
+                src={`http://localhost:8000${user.profile_picture}`}
+                alt={user.username}
+                className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
+              />
+            ) : (
+              <img
+                src="/default_icon.jpg"
+                alt={user?.username || "User"}
+                className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
+              />
+            )}
             <div className="flex-1">
               <Textarea
-                placeholder="Post your reply"
+                placeholder="Share your thoughts on this market idea..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={1}
@@ -210,7 +269,7 @@ export default function IdeaDetailPage() {
               />
               <div className="flex justify-end mt-2">
                 <Button type="submit" disabled={isSubmittingComment || !newComment.trim()} className="bg-blue-500 hover:bg-blue-600 text-white rounded-full font-bold px-5 py-2 text-sm">
-                  {isSubmittingComment ? "Replying..." : "Reply"}
+                  {isSubmittingComment ? "Commenting..." : "Comment"}
                 </Button>
               </div>
             </div>
@@ -221,9 +280,19 @@ export default function IdeaDetailPage() {
           {idea.comments.map((comment) => (
             <div key={comment.comment_id} className="p-4 hover:bg-gray-50/50">
               <div className="flex items-start space-x-3">
-                <div className="w-11 h-11 bg-orange-500 rounded-full flex-shrink-0 flex items-center justify-center">
-                  <span className="text-white font-semibold">{comment.user.username.charAt(0).toUpperCase()}</span>
-                </div>
+                {comment.user.profile_picture ? (
+                  <img
+                    src={`http://localhost:8000${comment.user.profile_picture}`}
+                    alt={comment.user.username}
+                    className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
+                  />
+                ) : (
+                  <img
+                    src="/default_icon.jpg"
+                    alt={comment.user.username}
+                    className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
+                  />
+                )}
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 text-sm">
                     <span 
@@ -242,7 +311,8 @@ export default function IdeaDetailPage() {
         </div>
         {idea.comments.length === 0 && (
           <div className="p-8 text-center text-gray-500">
-            <p>No replies yet.</p>
+            <p>No comments yet.</p>
+            <p className="text-sm mt-1">Be the first to share your thoughts on this market idea!</p>
           </div>
         )}
       </main>

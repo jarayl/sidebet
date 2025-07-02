@@ -145,6 +145,14 @@ coverage/
 .coverage
 htmlcov/
 
+# Testing directories and files
+backend/tests/
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+.tox/
+
 # Local development
 .local/
 local/

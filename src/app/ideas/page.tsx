@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { IdeasSidebar } from "@/components/ideas-sidebar";
 import { IdeasFeed } from "@/components/ideas-feed";
-import { RightSidebar } from "@/components/right-sidebar";
 
 interface PageUser {
   user_id: number;
@@ -41,28 +40,43 @@ export default function IdeasPage() {
     return null;
   }
   
-  const pageTitle = activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1);
+  const getPageTitle = (filter: string) => {
+    switch (filter) {
+      case 'home':
+        return 'Market Ideas';
+      case 'following':
+        return 'Following';
+      case 'trending':
+        return 'Trending Ideas';
+      case 'bookmarked':
+        return 'Saved Ideas';
+      case 'replies':
+        return 'My Comments';
+      default:
+        return 'Market Ideas';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} />
-      <div className="container mx-auto flex justify-center">
-        <header className="w-[275px] hidden sm:block">
+      <div className="container mx-auto flex justify-center gap-8">
+        <aside className="w-[275px] hidden sm:block">
           <IdeasSidebar 
             activeFilter={activeFilter} 
             onFilterChange={setActiveFilter} 
             user={user}
           />
-        </header>
+        </aside>
         <main className="w-full max-w-[600px] border-l border-r border-gray-200">
           <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 p-4 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">{pageTitle}</h1>
+            <h1 className="text-xl font-bold text-gray-900">{getPageTitle(activeFilter)}</h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Submit ideas for new prediction markets
+            </p>
           </div>
           <IdeasFeed filter={activeFilter} user={user} />
         </main>
-        <aside className="w-[350px] ml-8 hidden lg:block">
-          <RightSidebar />
-        </aside>
       </div>
     </div>
   );

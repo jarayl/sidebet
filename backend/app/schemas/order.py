@@ -8,6 +8,10 @@ class OrderSide(str, Enum):
     BUY = "BUY"
     SELL = "SELL"
 
+class ContractSide(str, Enum):
+    YES = "YES"
+    NO = "NO"
+
 class OrderType(str, Enum):
     MARKET = "market"
     LIMIT = "limit"
@@ -17,10 +21,12 @@ class OrderStatus(str, Enum):
     PARTIALLY_FILLED = "partially_filled"
     FILLED = "filled"
     CANCELLED = "cancelled"
+    MARKET_CLOSED = "market_closed"
 
 class OrderBase(BaseModel):
     contract_id: int
     side: OrderSide
+    contract_side: ContractSide  # YES or NO side of the contract
     order_type: OrderType
     price: Optional[Decimal] = Field(None, ge=0, le=1, decimal_places=4)
     quantity: int = Field(..., gt=0)

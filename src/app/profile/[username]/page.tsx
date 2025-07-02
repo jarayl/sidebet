@@ -6,9 +6,33 @@ import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { IdeaCard } from "@/components/idea-card";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, Plus, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, DollarSign, BarChart3 } from "lucide-react";
 import type { UserProfile, UserActivity, Idea } from "@/lib/types";
+
+interface Order {
+  order_id: number;
+  contract_id: number;
+  side: string;
+  contract_side: string;
+  order_type: string;
+  price: string;
+  quantity: number;
+  filled_quantity: number;
+  status: string;
+  created_at: string;
+  contract: {
+    contract_id: number;
+    title: string;
+    market: {
+      market_id: number;
+      title: string;
+      category: string;
+      status: string;
+    };
+  };
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -18,6 +42,7 @@ export default function ProfilePage() {
   const [currentUser, setCurrentUser] = useState<{ user_id: number; username: string; email: string } | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activity, setActivity] = useState<UserActivity[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -44,6 +69,13 @@ export default function ProfilePage() {
           if (activityRes.ok) {
             const activityData = await activityRes.json();
             setActivity(activityData);
+          }
+
+          // Get user's orders
+          const ordersRes = await fetch("http://localhost:8000/api/v1/orders/", { credentials: "include" });
+          if (ordersRes.ok) {
+            const ordersData = await ordersRes.json();
+            setOrders(ordersData);
           }
         }
       } catch (err) {
@@ -109,7 +141,7 @@ export default function ProfilePage() {
     created_at: userIdea.created_at,
     updated_at: userIdea.created_at,
     status: "pending" as const,
-    linked_market_id: null,
+    linked_market_id: undefined,
     likes_count: userIdea.likes_count,
     comments_count: userIdea.comments_count,
     submitted_by_user: {
@@ -138,6 +170,32 @@ export default function ProfilePage() {
       const filteredIdeas = profile.ideas.filter(idea => idea.idea_id !== ideaId);
       setProfile({ ...profile, ideas: filteredIdeas });
     }
+  };
+
+  const getOrderStatusBadge = (status: string) => {
+    switch (status) {
+      case 'open':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Open</Badge>;
+      case 'partially_filled':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Partial</Badge>;
+      case 'filled':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Filled</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Cancelled</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  const getPositionValue = (position: any) => {
+    // Handle cases where quantity or avg_price might be undefined (for other users)
+    const quantity = position.quantity || 0;
+    const avgPrice = position.avg_price ? parseFloat(position.avg_price) : 0;
+    
+    const currentValue = quantity * 1.0; // Assuming $1 max payout
+    const costBasis = quantity * avgPrice;
+    const pnl = currentValue - costBasis;
+    return { currentValue, costBasis, pnl };
   };
 
   if (isLoading) {
@@ -171,7 +229,7 @@ export default function ProfilePage() {
       <Navbar user={currentUser} />
       
       <div className="max-w-5xl mx-auto bg-white">
-        {/* Profile Header - Matching the example UI exactly */}
+        {/* Profile Header */}
         <div className="bg-gradient-to-r from-blue-400 to-purple-500 h-64 relative">
           <div className="absolute -bottom-20 left-12">
             {profile.profile_picture ? (
@@ -181,19 +239,18 @@ export default function ProfilePage() {
                 className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
               />
             ) : (
-              <div className="w-40 h-40 bg-orange-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                <span className="text-white text-5xl font-bold">
-                  {profile.username.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              <img
+                src="/default_icon.jpg"
+                alt={profile.username}
+                className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
+              />
             )}
           </div>
         </div>
 
-        {/* Profile Info - Exact layout from example */}
+        {/* Profile Info */}
         <div className="px-12 pt-24 pb-8">
           <div className="flex justify-between items-start">
-            {/* Left side: name, title, location, date */}
             <div className="flex-1 max-w-md">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-4xl font-bold text-gray-900">{profile.username}</h1>
@@ -207,7 +264,6 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            {/* Right side: stats and buttons - Exact layout from example */}
             <div className="flex flex-col items-end gap-6">
               <div className="flex items-center gap-8">
                 <div className="text-center">
@@ -222,9 +278,9 @@ export default function ProfilePage() {
                   <div className="text-2xl font-bold text-gray-900">{profile.likes_count}</div>
                   <div className="text-sm text-gray-500">Likes</div>
                 </div>
-                {profile.balance !== undefined && (
+                {profile.balance !== undefined && profile.is_own_profile && (
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">${profile.balance}</div>
+                    <div className="text-2xl font-bold text-gray-900">${(profile.balance / 100).toFixed(2)}</div>
                     <div className="text-sm text-gray-500">Balance</div>
                   </div>
                 )}
@@ -253,118 +309,195 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Tabs - Matching example layout with left alignment and proper styling */}
+        {/* Tabs */}
         <div className="border-t border-gray-200">
-          <Tabs defaultValue="bets" className="w-full">
+          <Tabs defaultValue={profile.is_own_profile ? "positions" : "ideas"} className="w-full">
             <div className="flex border-b border-gray-200">
               <TabsList className="bg-transparent p-0 h-auto space-x-0">
+                {profile.is_own_profile && (
+                  <>
                 <TabsTrigger 
-                  value="bets" 
+                      value="positions" 
                   className="bg-transparent border-0 rounded-none px-6 py-4 text-gray-600 font-semibold relative data-[state=active]:bg-transparent data-[state=active]:text-black hover:text-black transition-colors data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-0.5 data-[state=active]:after:bg-black"
                 >
-                  Bets <sup className="text-xs ml-1 font-normal">{profile.bets.length}</sup>
+                      Active Positions <sup className="text-xs ml-1 font-normal">{profile.bets.length}</sup>
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="posts" 
+                      value="orders" 
                   className="bg-transparent border-0 rounded-none px-6 py-4 text-gray-600 font-semibold relative data-[state=active]:bg-transparent data-[state=active]:text-black hover:text-black transition-colors data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-0.5 data-[state=active]:after:bg-black"
                 >
-                  Posts
+                      Pending Orders <sup className="text-xs ml-1 font-normal">{orders.filter(o => o.status === 'open' || o.status === 'partially_filled').length}</sup>
                 </TabsTrigger>
+                  </>
+                )}
                 <TabsTrigger 
-                  value="replies" 
+                  value="ideas" 
                   className="bg-transparent border-0 rounded-none px-6 py-4 text-gray-600 font-semibold relative data-[state=active]:bg-transparent data-[state=active]:text-black hover:text-black transition-colors data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-0.5 data-[state=active]:after:bg-black"
                 >
-                  Replies
+                  Market Ideas <sup className="text-xs ml-1 font-normal">{profile.ideas.length}</sup>
                 </TabsTrigger>
                 {profile.is_own_profile && (
                   <TabsTrigger 
                     value="activity" 
                     className="bg-transparent border-0 rounded-none px-6 py-4 text-gray-600 font-semibold relative data-[state=active]:bg-transparent data-[state=active]:text-black hover:text-black transition-colors data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-0.5 data-[state=active]:after:bg-black"
                   >
-                    Activity
+                    Recent Activity
                   </TabsTrigger>
                 )}
               </TabsList>
             </div>
 
-            {/* Bets Tab - Market Grid Layout */}
-            <TabsContent value="bets" className="p-12">
+            {/* Active Positions Tab */}
+            {profile.is_own_profile && (
+              <TabsContent value="positions" className="p-12">
               {profile.bets.length === 0 ? (
                 <div className="text-center py-16 text-gray-500">
-                  <p className="text-xl">No active bets</p>
+                  <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-xl">No active positions</p>
                   <p className="text-sm mt-2">When you place bets, they'll show up here.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {profile.bets.map((bet) => (
-                    <div key={`bet-${bet.market_id}-${bet.outcome}`} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow flex flex-col h-full min-h-[320px]">
-                      {/* Header with category and title */}
-                      <div className="flex items-start gap-4 mb-6">
-                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex-shrink-0 flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">BET</span>
+                <div className="space-y-4">
+                  {profile.bets.map((bet) => {
+                    const { currentValue, costBasis, pnl } = getPositionValue(bet);
+                    const isProfit = pnl >= 0;
+                    
+                    return (
+                      <Card 
+                        key={`bet-${bet.market_id}-${bet.outcome}`} 
+                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => router.push(`/markets/${bet.market_id}`)}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                  <span className="text-white text-xs font-bold">
+                                    {bet.market_category?.charAt(0) || "M"}
+                                  </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          {bet.market_category && (
-                            <div className="text-xs text-gray-500 mb-2 uppercase tracking-wide font-semibold">{bet.market_category}</div>
-                          )}
-                          <h3 className="text-lg font-bold text-gray-900 leading-tight line-clamp-2">
-                            {bet.market_title}
-                          </h3>
+                                <div>
+                                  <h3 className="font-semibold text-gray-900 line-clamp-1">{bet.contract_title}</h3>
+                                  <p className="text-sm text-gray-500">{bet.market_title}</p>
                         </div>
                       </div>
 
-                      {/* Bet details */}
-                      <div className="space-y-4 mb-6 flex-grow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-gray-700 font-medium">Position</span>
-                            <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
+                              <div className="flex items-center gap-4 mb-3">
+                                <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
                               bet.outcome === 'YES' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                             }`}>
                               {bet.outcome}
                             </span>
+                                {bet.quantity !== undefined && (
+                                  <span className="text-gray-600">
+                                    {bet.quantity} shares
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-gray-900">
+                                ${currentValue.toFixed(2)}
+                              </div>
+                              <div className={`text-sm font-medium ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
+                                {isProfit ? '+' : ''}${pnl.toFixed(2)}
+                                {isProfit ? (
+                                  <TrendingUp className="w-4 h-4 inline ml-1" />
+                                ) : (
+                                  <TrendingDown className="w-4 h-4 inline ml-1" />
+                                )}
+                              </div>
+                              {bet.avg_price !== undefined && (
+                                <div className="text-xs text-gray-500">
+                                  Avg: ${Number(bet.avg_price)?.toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+            )}
+
+            {/* Pending Orders Tab */}
+            {profile.is_own_profile && (
+              <TabsContent value="orders" className="p-12">
+              {orders.filter(o => o.status === 'open' || o.status === 'partially_filled').length === 0 ? (
+                <div className="text-center py-16 text-gray-500">
+                  <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-xl">No pending orders</p>
+                  <p className="text-sm mt-2">Your open orders will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.filter(o => o.status === 'open' || o.status === 'partially_filled').map((order) => (
+                    <Card 
+                      key={order.order_id} 
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => router.push(`/markets/${order.contract.market.market_id}`)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white text-xs font-bold">
+                                  {order.contract.market.category?.charAt(0) || "M"}
+                                </span>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900 line-clamp-1">{order.contract.title}</h3>
+                                <p className="text-sm text-gray-500">{order.contract.market.title}</p>
                           </div>
                         </div>
                         
-                        {bet.quantity !== undefined && bet.avg_price !== undefined && (
-                          <div className="space-y-3 text-sm text-gray-600">
-                            <div className="flex justify-between">
-                              <span>Shares:</span>
-                              <span className="font-semibold text-gray-900">{bet.quantity}</span>
+                            <div className="flex items-center gap-4 mb-2">
+                              <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
+                                order.side === 'BUY' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {order.side} {order.contract_side}
+                              </span>
+                              {getOrderStatusBadge(order.status)}
                             </div>
-                            <div className="flex justify-between">
-                              <span>Avg Price:</span>
-                              <span className="font-semibold text-gray-900">${Number(bet.avg_price)?.toFixed(2)}</span>
+                            
+                            <div className="text-sm text-gray-600">
+                              {order.filled_quantity}/{order.quantity} filled at ${parseFloat(order.price).toFixed(2)}
                             </div>
                           </div>
-                        )}
+                          
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-gray-900">
+                              ${(parseFloat(order.price) * order.quantity).toFixed(2)}
                       </div>
-
-                      {/* Bottom section */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                        <div className="text-sm text-gray-500 font-medium">
-                          Active Position
+                            <div className="text-sm text-gray-500">
+                              {formatTimeAgo(order.created_at)}
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="w-10 h-10 rounded-full hover:bg-gray-100"
-                        >
-                          <Plus className="w-5 h-5 text-gray-600" />
+                            <Button variant="outline" size="sm" className="mt-2">
+                              Cancel
                         </Button>
                       </div>
                     </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
             </TabsContent>
+            )}
 
-            {/* Posts Tab - Using IdeaCard component */}
-            <TabsContent value="posts" className="p-0">
+            {/* Market Ideas Tab */}
+            <TabsContent value="ideas" className="p-0">
               {profile.ideas.length === 0 ? (
                 <div className="text-center py-16 text-gray-500">
-                  <p className="text-xl">No posts yet</p>
-                  <p className="text-sm mt-2">When you post ideas, they'll show up here.</p>
+                  <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-xl">No market ideas yet</p>
+                  <p className="text-sm mt-2">When you submit ideas for new markets, they'll show up here.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
@@ -372,7 +505,6 @@ export default function ProfilePage() {
                     <IdeaCard 
                       key={`idea-${idea.idea_id}`}
                       idea={convertToIdeaFormat(idea)} 
-                      currentUser={currentUser}
                       onUpdate={handleIdeaUpdate}
                       onDelete={handleIdeaDelete}
                     />
@@ -381,39 +513,13 @@ export default function ProfilePage() {
               )}
             </TabsContent>
 
-            {/* Replies Tab */}
-            <TabsContent value="replies" className="p-12">
-              <div className="space-y-6">
-                {profile.replies.length === 0 ? (
-                  <div className="text-center py-16 text-gray-500">
-                    <p className="text-xl">No replies yet</p>
-                    <p className="text-sm mt-2">When you reply to posts, they'll show up here.</p>
-                  </div>
-                ) : (
-                  profile.replies.map((reply) => (
-                    <Card key={`reply-${reply.comment_id}`} className="hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => router.push(`/ideas/${reply.idea_id}`)}>
-                      <CardContent className="p-6">
-                        <div className="text-sm text-gray-500 mb-3">
-                          Replying to: <span className="font-medium text-gray-700">{reply.idea_title}</span>
-                        </div>
-                        <p className="text-gray-900 mb-3 text-base">{reply.content}</p>
-                        <div className="text-sm text-gray-500">
-                          {formatTimeAgo(reply.created_at)}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            {/* Activity Tab - Own profile only */}
+            {/* Recent Activity Tab - Own profile only */}
             {profile.is_own_profile && (
               <TabsContent value="activity" className="p-12">
                 <div className="space-y-6">
                   {activity.length === 0 ? (
                     <div className="text-center py-16 text-gray-500">
+                      <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                       <p className="text-xl">No recent activity</p>
                       <p className="text-sm mt-2">Your activity will show up here.</p>
                     </div>
@@ -421,9 +527,16 @@ export default function ProfilePage() {
                     activity.map((item, index) => (
                       <Card key={`activity-${item.type}-${index}-${item.created_at}`} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-6">
-                          <div className="flex justify-between items-start">
+                          <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              {item.type === 'idea_created' && <DollarSign className="w-5 h-5 text-blue-600" />}
+                              {item.type === 'comment_created' && <Clock className="w-5 h-5 text-blue-600" />}
+                              {item.type === 'bet_resolved' && <CheckCircle className="w-5 h-5 text-blue-600" />}
+                            </div>
+                            <div className="flex-1">
                             <p className="text-gray-900 text-base">{item.description}</p>
                             <span className="text-sm text-gray-500">{formatTimeAgo(item.created_at)}</span>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>

@@ -5,6 +5,7 @@ from decimal import Decimal
 
 class UserBetResponse(BaseModel):
     market_id: int
+    contract_title: str
     market_title: str
     market_category: Optional[str] = None
     outcome: str

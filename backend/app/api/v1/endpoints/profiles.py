@@ -50,7 +50,8 @@ def get_user_profile(
         joinedload(Position.contract).joinedload(Contract.market)
     ).filter(
         Position.user_id == target_user.user_id,
-        Position.quantity != 0
+        Position.quantity != 0,
+        Position.is_active == True  # Only show active positions
     ).all()
     
     bets = []
@@ -58,9 +59,10 @@ def get_user_profile(
         market = position.contract.market
         bets.append({
             "market_id": market.market_id,
+            "contract_title": position.contract.title,
             "market_title": market.title,
             "market_category": market.category,
-            "outcome": position.contract.outcome,
+            "outcome": position.contract_side,
             "quantity": position.quantity if current_user.user_id == target_user.user_id else None,
             "avg_price": position.avg_price if current_user.user_id == target_user.user_id else None,
         })
