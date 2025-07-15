@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useRouter, usePathname } from "next/navigation";
-import { User, ChevronDown, Settings, LogOut } from "lucide-react";
+import { User, ChevronDown, Settings, LogOut, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,7 @@ interface UserType {
   email?: string;
   username: string;
   profile_picture?: string;
+  is_superuser?: boolean;
 }
 
 interface NavbarProps {
@@ -135,6 +136,18 @@ export function Navbar({ user }: NavbarProps) {
                   <Settings className="w-6 h-6 mr-4" />
                   Settings
                 </DropdownMenuItem>
+                {user.is_superuser && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleNavigate("/admin")}
+                      className="px-5 py-3 text-lg text-purple-600 focus:text-purple-700 focus:bg-purple-50"
+                    >
+                      <Shield className="w-6 h-6 mr-4" />
+                      Admin Panel
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
