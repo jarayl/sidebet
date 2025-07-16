@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import os
@@ -10,7 +10,7 @@ from app.models.user import User
 from app.models.position import Position
 from app.models.contract import Contract
 from app.models.market import Market
-from app.schemas.user import UserCreate, UserResponse, UserProfileUpdate, PasswordUpdate
+from app.schemas.user import UserResponse, UserProfile, UserProfileUpdate, PasswordUpdate, UserCreate
 from app.schemas.auth import UserResponse as AuthUserResponse
 from app.api import deps
 from app.core import security
@@ -25,7 +25,13 @@ def read_users(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
+    current_user: User = Depends(deps.get_current_user),
 ):
+    """
+    Retrieve users (admin only).
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
@@ -48,7 +54,7 @@ def create_user(
     db.refresh(db_user)
     return db_user
 
-@router.get("/me", response_model=AuthUserResponse)
+@router.get("/me", response_model=UserProfile)
 def read_user_me(
     current_user: User = Depends(deps.get_current_user),
 ):

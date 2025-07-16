@@ -28,8 +28,8 @@ class User(Base):
     )
     
     # Relationships - using string references to avoid circular imports
-    orders = relationship("Order", back_populates="user")
-    positions = relationship("Position", back_populates="user")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    positions = relationship("Position", back_populates="user", cascade="all, delete-orphan")
     ideas = relationship("Idea", back_populates="submitted_by_user")
     idea_likes = relationship("IdeaLike", back_populates="user", cascade="all, delete-orphan")
     idea_comments = relationship("IdeaComment", back_populates="user", cascade="all, delete-orphan")

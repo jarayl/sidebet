@@ -14,6 +14,7 @@ from app.models.position import Position
 from app.models.contract import Contract
 from app.models.user import User
 from app.core.trading_metrics import get_metrics_collector
+from app.models.market import Market
 
 logger = logging.getLogger(__name__)
 
@@ -399,6 +400,64 @@ class TradingEngine:
                     position.realised_pnl += realized_pnl
                     position.quantity -= quantity_to_sell
     
+    def process_market_resolution(self, market: Market):
+        """Processes payouts for all contracts in a resolved market."""
+        if market.status != "resolved" or not market.result:
+            raise ValueError("Market is not resolved or has no result.")
+
+        contracts = self.db.query(Contract).filter(Contract.market_id == market.market_id).all()
+
+        with self.serializable_transaction():
+            for contract in contracts:
+                self._payout_contract(contract, market.result)
+
+    def _payout_contract(self, contract: Contract, market_result: str):
+        """Handles payouts for a single contract based on market result."""
+        # Lock all positions for this contract to prevent race conditions.
+        positions = self.db.query(Position).filter(
+            Position.contract_id == contract.contract_id,
+            Position.quantity > 0 # Only process positions with shares
+        ).with_for_update().all()
+
+        user_ids = [p.user_id for p in positions]
+        if not user_ids:
+            return
+
+        # Lock all users involved to update balances safely.
+        users = self.db.query(User).filter(User.user_id.in_(user_ids)).with_for_update().all()
+        users_dict = {u.user_id: u for u in users}
+
+        for position in positions:
+            user = users_dict.get(position.user_id)
+            if not user:
+                logger.error(f"Payout error: User {position.user_id} not found for position {position.position_id}")
+                continue
+
+            payout_amount = 0
+            pnl = 0
+
+            if market_result == "UNDECIDED":
+                # Refund the initial cost of the position
+                payout_amount = int(position.quantity * position.avg_price * 100)
+                pnl = 0 # No profit or loss
+            elif position.contract_side == market_result: # This is a winning position
+                payout_amount = position.quantity * 100 # Each share is worth $1 (100 cents)
+                pnl = payout_amount - int(position.quantity * position.avg_price * 100)
+            else: # Losing position
+                payout_amount = 0
+                pnl = -int(position.quantity * position.avg_price * 100)
+
+            # Update user balance and position PnL
+            user.balance += payout_amount
+            position.realised_pnl += Decimal(pnl) / 100
+            position.is_active = False # Mark position as inactive
+
+            logger.info(
+                f"Payout for User ID {user.user_id}: Contract {contract.contract_id}, "
+                f"Side {position.contract_side}, Qty {position.quantity}, "
+                f"Result {market_result}. Payout: {payout_amount/100:.2f}, PnL: {position.realised_pnl:.2f}"
+            )
+
     def get_best_ask_price(self, contract_id: int, contract_side: str) -> Optional[Decimal]:
         """
         Get the best ask price (lowest active sell order) for a specific side of a contract.

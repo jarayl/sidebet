@@ -7,7 +7,7 @@ class Order(Base):
     __tablename__ = "orders"
 
     order_id = Column(BigInteger, primary_key=True, index=True)
-    user_id = Column(BigInteger, ForeignKey("users.user_id"), nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     contract_id = Column(BigInteger, ForeignKey("contracts.contract_id"), nullable=False)
     side = Column(String(4), nullable=False)  # 'BUY' or 'SELL'
     contract_side = Column(String(3), nullable=False)  # 'YES' or 'NO' - which side of the contract
@@ -31,5 +31,5 @@ class Order(Base):
     # Relationships - using string references to avoid circular imports
     user = relationship("User", back_populates="orders")
     contract = relationship("Contract", back_populates="orders")
-    buy_trades = relationship("Trade", foreign_keys="Trade.buy_order_id", back_populates="buy_order")
-    sell_trades = relationship("Trade", foreign_keys="Trade.sell_order_id", back_populates="sell_order") 
+    buy_trades = relationship("Trade", foreign_keys="Trade.buy_order_id", back_populates="buy_order", cascade="all, delete-orphan")
+    sell_trades = relationship("Trade", foreign_keys="Trade.sell_order_id", back_populates="sell_order", cascade="all, delete-orphan") 

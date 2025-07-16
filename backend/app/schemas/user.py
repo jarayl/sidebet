@@ -26,3 +26,15 @@ class UserProfileUpdate(BaseModel):
 class PasswordUpdate(BaseModel):
     current_password: str
     new_password: constr(min_length=8) 
+
+class UserProfile(BaseModel):
+    user_id: int
+    username: str
+    email: EmailStr
+    is_superuser: bool
+    status: str
+    balance: int
+    profile_picture: Optional[str] = None
+    
+    class Config:
+        from_attributes = True 

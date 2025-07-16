@@ -15,7 +15,7 @@ class Contract(Base):
     # Add check constraints
     __table_args__ = (
         CheckConstraint("status IN ('open', 'closed', 'resolved')", name='check_contract_status'),
-        CheckConstraint("resolution IN ('YES', 'NO')", name='check_contract_resolution'),
+        CheckConstraint("resolution IN ('YES', 'NO', 'UNDECIDED')", name='check_contract_resolution'),
         # Ensure contract titles are unique within a market
         UniqueConstraint('market_id', 'title', name='unique_market_contract_title'),
     )

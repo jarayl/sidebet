@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from decimal import Decimal
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Annotated
 from enum import Enum
 
 class OrderSide(str, Enum):
@@ -28,14 +28,14 @@ class OrderBase(BaseModel):
     side: OrderSide
     contract_side: ContractSide  # YES or NO side of the contract
     order_type: OrderType
-    price: Optional[Decimal] = Field(None, ge=0, le=1, decimal_places=4)
+    price: Optional[Annotated[Decimal, Field(ge=0, le=1)]] = None
     quantity: int = Field(..., gt=0)
 
 class OrderCreate(OrderBase):
     pass
 
 class OrderUpdate(BaseModel):
-    price: Optional[Decimal] = Field(None, ge=0, le=1, decimal_places=4)
+    price: Optional[Annotated[Decimal, Field(ge=0, le=1)]] = None
     quantity: Optional[int] = Field(None, gt=0)
     status: Optional[OrderStatus] = None
 

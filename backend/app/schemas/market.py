@@ -9,9 +9,30 @@ class MarketStatus(str, Enum):
     RESOLVED = "resolved"
     CANCELLED = "cancelled"
 
-class ContractOption(BaseModel):
+class ContractBase(BaseModel):
     title: str
     description: Optional[str] = None
+
+class ContractCreate(ContractBase):
+    pass
+
+class ContractUpdate(ContractBase):
+    contract_id: Optional[int] = None
+
+class MarketBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category: str
+    image_url: Optional[str] = None
+    start_time: datetime
+    close_time: datetime
+    resolve_time: Optional[datetime] = None
+
+class MarketCreate(MarketBase):
+    contracts: List[ContractCreate]
+
+class MarketUpdate(MarketBase):
+    contracts: List[ContractUpdate]
 
 class ContractResponse(BaseModel):
     contract_id: int
@@ -19,39 +40,17 @@ class ContractResponse(BaseModel):
     description: Optional[str] = None
     status: str
     resolution: Optional[str] = None
-    # Market data for each side
     yes_price: Optional[str] = None
     no_price: Optional[str] = None
-    yes_volume: Optional[int] = None
-    no_volume: Optional[int] = None
-
-class MarketBase(BaseModel):
-    title: str
-    description: Optional[str] = None
-    category: Optional[str] = None
-    image_url: Optional[str] = None
-    start_time: datetime
-    close_time: datetime
-    resolve_time: Optional[datetime] = None
-
-class MarketCreate(MarketBase):
-    contracts: List[ContractOption] = []
-
-class MarketUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    image_url: Optional[str] = None
-    start_time: Optional[datetime] = None
-    close_time: Optional[datetime] = None
-    resolve_time: Optional[datetime] = None
-    status: Optional[MarketStatus] = None
+    yes_volume: Optional[int] = 0
+    no_volume: Optional[int] = 0
 
 class MarketResponse(MarketBase):
     market_id: int
-    status: MarketStatus
+    status: str
+    result: Optional[str] = None
     is_bookmarked: Optional[bool] = False
-    contracts: Optional[List[ContractResponse]] = None
+    contracts: List[ContractResponse]
 
     class Config:
         from_attributes = True 

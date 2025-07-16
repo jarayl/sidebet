@@ -7,8 +7,8 @@ class Trade(Base):
     __tablename__ = "trades"
 
     trade_id = Column(BigInteger, primary_key=True, index=True)
-    buy_order_id = Column(BigInteger, ForeignKey("orders.order_id"), nullable=False)
-    sell_order_id = Column(BigInteger, ForeignKey("orders.order_id"), nullable=False)
+    buy_order_id = Column(BigInteger, ForeignKey("orders.order_id", ondelete="CASCADE"), nullable=False)
+    sell_order_id = Column(BigInteger, ForeignKey("orders.order_id", ondelete="CASCADE"), nullable=False)
     contract_id = Column(BigInteger, ForeignKey("contracts.contract_id"), nullable=False)
     price = Column(Numeric(6, 4), nullable=False)
     quantity = Column(Integer, nullable=False)

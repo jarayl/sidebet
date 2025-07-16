@@ -116,8 +116,8 @@ export default function AdminDashboard() {
   const getSystemStatusBadge = () => {
     if (!systemMetrics) return <Badge variant="secondary">Loading...</Badge>;
     
-    const successRate = systemMetrics.orders?.success_rate || 0;
-    const avgLatency = systemMetrics.performance?.avg_latency_ms || 0;
+    const successRate = systemMetrics.orders?.success_rate ?? 0;
+    const avgLatency = systemMetrics.performance?.avg_latency_ms ?? 0;
     
     if (successRate >= 98 && avgLatency < 100) {
       return <Badge className="bg-green-100 text-green-800 border-green-200">Healthy</Badge>;
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Success Rate</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {systemMetrics ? `${systemMetrics.orders.success_rate.toFixed(1)}%` : "---"}
+                    {systemMetrics?.orders ? `${systemMetrics.orders.success_rate.toFixed(1)}%` : "---"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">Order success</p>
                 </div>
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Avg Latency</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {systemMetrics ? `${systemMetrics.performance.avg_latency_ms.toFixed(0)}ms` : "---"}
+                    {systemMetrics?.performance ? `${systemMetrics.performance.avg_latency_ms.toFixed(0)}ms` : "---"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">Response time</p>
                 </div>
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Orders</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {systemMetrics ? systemMetrics.orders.active.toLocaleString() : "---"}
+                    {systemMetrics?.orders ? systemMetrics.orders.active.toLocaleString() : "---"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">In progress</p>
                 </div>
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Total Users</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.total_users.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.total_users?.toLocaleString() ?? "---"}</p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center text-green-600 text-sm">
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Active Users (30d)</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.active_users.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.active_users?.toLocaleString() ?? "---"}</p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center text-green-600 text-sm">
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Total Markets</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.total_markets}</p>
+                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.total_markets ?? "---"}</p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center text-blue-600 text-sm">
@@ -311,7 +311,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Active Markets</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.active_markets}</p>
+                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.active_markets ?? "---"}</p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center text-orange-600 text-sm">
@@ -340,18 +340,18 @@ export default function AdminDashboard() {
                 <div className="text-center p-6 bg-gradient-to-br from-green-50 to-blue-50 rounded-lg border">
                   <p className="text-sm text-gray-600 mb-2">Total Trading Volume</p>
                   <p className="text-3xl font-bold text-gray-900">
-                    ${dashboardStats?.total_volume.toLocaleString()}
+                    ${dashboardStats?.total_volume?.toLocaleString() ?? "---"}
                   </p>
                   <p className="text-sm text-green-600 mt-2">+15% from last month</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-lg font-bold text-gray-900">{dashboardStats?.total_trades.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-gray-900">{dashboardStats?.total_trades?.toLocaleString() ?? "---"}</p>
                     <p className="text-sm text-gray-600">Total Trades</p>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <p className="text-lg font-bold text-gray-900">
-                      {systemMetrics ? systemMetrics.trades.rate_per_second.toFixed(2) : "0.00"}
+                      {systemMetrics?.trades ? systemMetrics.trades.rate_per_second.toFixed(2) : "---"}
                     </p>
                     <p className="text-sm text-gray-600">Trades/sec</p>
                   </div>

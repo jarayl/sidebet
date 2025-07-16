@@ -7,7 +7,7 @@ class Position(Base):
     __tablename__ = "positions"
 
     position_id = Column(BigInteger, primary_key=True, index=True)
-    user_id = Column(BigInteger, ForeignKey("users.user_id"), nullable=False, index=True)
+    user_id = Column(BigInteger, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     contract_id = Column(BigInteger, ForeignKey("contracts.contract_id"), nullable=False, index=True)
     contract_side = Column(String(3), nullable=False)  # 'YES' or 'NO'
     quantity = Column(Integer, nullable=False)  # number of shares owned

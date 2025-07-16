@@ -271,6 +271,104 @@ def create_market(
         contracts=contract_responses
     )
 
+@router.put("/{market_id}", response_model=MarketResponse)
+def update_market(
+    market_id: int,
+    market_in: MarketUpdate,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Update an existing market and its contracts (admin only).
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can update markets"
+        )
+    
+    market = db.query(Market).filter(Market.market_id == market_id).first()
+    if not market:
+        raise HTTPException(status_code=404, detail="Market not found")
+    
+    # Update market fields
+    market.title = market_in.title
+    market.description = market_in.description
+    market.category = market_in.category
+    market.image_url = market_in.image_url
+    market.start_time = market_in.start_time
+    market.close_time = market_in.close_time
+    
+    # Handle contracts
+    existing_contracts = {c.contract_id: c for c in market.contracts}
+    incoming_contracts = {c.contract_id: c for c in market_in.contracts if c.contract_id}
+    
+    # Delete contracts that are no longer present
+    for contract_id, contract in existing_contracts.items():
+        if contract_id not in incoming_contracts:
+            db.delete(contract)
+            
+    # Update existing and create new contracts
+    new_contracts = []
+    for contract_data in market_in.contracts:
+        if contract_data.contract_id:
+            # Update existing contract
+            contract = existing_contracts.get(contract_data.contract_id)
+            if contract:
+                contract.title = contract_data.title
+                contract.description = contract_data.description
+        else:
+            # Create new contract
+            new_contract = Contract(
+                market_id=market_id,
+                title=contract_data.title,
+                description=contract_data.description,
+                status="open"
+            )
+            db.add(new_contract)
+            new_contracts.append(new_contract)
+
+    db.commit()
+    db.refresh(market)
+
+    # Refresh any new contracts to get their IDs
+    for contract in new_contracts:
+        db.refresh(contract)
+    
+    # Format the response
+    trading_engine = TradingEngine(db)
+    contract_responses = []
+    for contract in market.contracts:
+        yes_stats = trading_engine.get_contract_stats(contract.contract_id, "YES")
+        no_stats = trading_engine.get_contract_stats(contract.contract_id, "NO")
+        
+        contract_responses.append(ContractResponse(
+            contract_id=contract.contract_id,
+            title=contract.title,
+            description=contract.description,
+            status=contract.status,
+            resolution=contract.resolution,
+            yes_price=f"{int(yes_stats['best_ask_price'] * 100)}¢" if yes_stats['best_ask_price'] else "No price",
+            no_price=f"{int(no_stats['best_ask_price'] * 100)}¢" if no_stats['best_ask_price'] else "No price",
+            yes_volume=yes_stats['total_volume'],
+            no_volume=no_stats['total_volume']
+        ))
+        
+    return MarketResponse(
+        market_id=market.market_id,
+        title=market.title,
+        description=market.description,
+        category=market.category,
+        image_url=market.image_url,
+        start_time=market.start_time,
+        close_time=market.close_time,
+        resolve_time=market.resolve_time,
+        status=market.status,
+        result=market.result,
+        is_bookmarked=False,  # You might want to fetch this
+        contracts=contract_responses
+    )
+
 @router.get("/{market_id}", response_model=dict)
 def get_market_details(
     market_id: int,
@@ -449,7 +547,7 @@ def resolve_market(
 ):
     """
     Resolve a market (admin only).
-    Efficiently marks all related orders and positions as inactive.
+    Updates market status, processes payouts for all users with positions, and closes all orders.
     """
     if not current_user.is_superuser:
         raise HTTPException(
@@ -464,61 +562,157 @@ def resolve_market(
     if not market:
         raise HTTPException(status_code=404, detail="Market not found")
     
-    # Update market status
-    market.status = "resolved"
-    market.result = result
-    market.resolve_time = datetime.now(timezone.utc)
+    if market.status == "resolved":
+        raise HTTPException(status_code=400, detail="Market is already resolved")
     
-    # Get all contracts for this market
-    contracts = db.query(Contract).filter(Contract.market_id == market_id).all()
-    contract_ids = [c.contract_id for c in contracts]
+    try:
+        # Update market status
+        market.status = "resolved"
+        market.result = result
+        market.resolve_time = datetime.now(timezone.utc)
+        
+        # Get all contracts for this market
+        contracts = db.query(Contract).filter(Contract.market_id == market_id).all()
+        contract_ids = [c.contract_id for c in contracts]
+        
+        if contract_ids:
+            # Cancel all open orders first
+            affected_orders = db.query(Order).filter(
+                Order.contract_id.in_(contract_ids),
+                Order.status.in_(["open", "partially_filled"])
+            ).update(
+                {"status": "market_closed"},
+                synchronize_session=False
+            )
+            
+            # Update all contracts to resolved status with the same result
+            db.query(Contract).filter(
+                Contract.contract_id.in_(contract_ids)
+            ).update(
+                {"status": "resolved", "resolution": result},
+                synchronize_session=False
+            )
+            
+            # Commit the status changes first
+            db.commit()
+            
+            # Now process payouts using the trading engine
+            trading_engine = TradingEngine(db)
+            trading_engine.process_market_resolution(market)
+            
+            logger.info(f"Market {market_id} resolved with result: {result}. Payouts processed.")
+        
+        # Get final statistics
+        affected_positions = db.query(Position).filter(
+            Position.contract_id.in_(contract_ids),
+            Position.is_active == False
+        ).count() if contract_ids else 0
+        
+        return {
+            "message": f"Market resolved with result: {result}. Payouts processed automatically.",
+            "affected_orders": affected_orders if contract_ids else 0,
+            "affected_positions": affected_positions,
+            "contracts_resolved": len(contract_ids),
+            "payouts_processed": True
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error resolving market {market_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resolve market: {str(e)}"
+        )
+
+@router.put("/{market_id}/contracts/{contract_id}/resolve")
+def resolve_contract(
+    market_id: int,
+    contract_id: int,
+    resolution_data: dict,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Resolve an individual contract within a market (admin only).
+    Allows for granular resolution when different contracts have different outcomes.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can resolve contracts"
+        )
     
-    if contract_ids:
-        # Efficiently update all open orders to 'market_closed' status
-        db.query(Order).filter(
-            Order.contract_id.in_(contract_ids),
+    result = resolution_data.get("resolution")
+    if result not in ["YES", "NO", "UNDECIDED"]:
+        raise HTTPException(status_code=400, detail="Resolution must be YES, NO, or UNDECIDED")
+    
+    # Verify the market and contract exist and are related
+    market = db.query(Market).filter(Market.market_id == market_id).first()
+    if not market:
+        raise HTTPException(status_code=404, detail="Market not found")
+    
+    contract = db.query(Contract).filter(
+        Contract.contract_id == contract_id,
+        Contract.market_id == market_id
+    ).first()
+    if not contract:
+        raise HTTPException(status_code=404, detail="Contract not found in this market")
+    
+    if contract.status == "resolved":
+        raise HTTPException(status_code=400, detail="Contract is already resolved")
+    
+    try:
+        # Update contract status
+        contract.status = "resolved"
+        contract.resolution = result
+        
+        # Cancel all open orders for this contract
+        affected_orders = db.query(Order).filter(
+            Order.contract_id == contract_id,
             Order.status.in_(["open", "partially_filled"])
         ).update(
             {"status": "market_closed"},
             synchronize_session=False
         )
         
-        # Efficiently mark all positions as inactive
-        db.query(Position).filter(
-            Position.contract_id.in_(contract_ids),
-            Position.is_active == True
-        ).update(
-            {"is_active": False},
-            synchronize_session=False
-        )
+        # Commit the status changes
+        db.commit()
         
-        # Update all contracts to resolved status
-        db.query(Contract).filter(
-            Contract.contract_id.in_(contract_ids)
-        ).update(
-            {"status": "resolved"},
-            synchronize_session=False
+        # Process payouts for this specific contract
+        trading_engine = TradingEngine(db)
+        trading_engine._payout_contract(contract, result)
+        
+        # Check if all contracts in the market are now resolved
+        remaining_contracts = db.query(Contract).filter(
+            Contract.market_id == market_id,
+            Contract.status != "resolved"
+        ).count()
+        
+        # If all contracts are resolved, mark the market as resolved
+        if remaining_contracts == 0:
+            market.status = "resolved"
+            market.resolve_time = datetime.now(timezone.utc)
+            # Don't set a single market result since contracts may have different outcomes
+            db.commit()
+        
+        logger.info(f"Contract {contract_id} in market {market_id} resolved with result: {result}")
+        
+        return {
+            "message": f"Contract '{contract.title}' resolved with result: {result}",
+            "affected_orders": affected_orders,
+            "contract_id": contract_id,
+            "resolution": result,
+            "market_fully_resolved": remaining_contracts == 0,
+            "payouts_processed": True
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error resolving contract {contract_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resolve contract: {str(e)}"
         )
-    
-    db.commit()
-    
-    # Log the resolution for debugging
-    affected_orders = db.query(Order).filter(
-        Order.contract_id.in_(contract_ids),
-        Order.status == "market_closed"
-    ).count() if contract_ids else 0
-    
-    affected_positions = db.query(Position).filter(
-        Position.contract_id.in_(contract_ids),
-        Position.is_active == False
-    ).count() if contract_ids else 0
-    
-    return {
-        "message": f"Market resolved with result: {result}",
-        "affected_orders": affected_orders,
-        "affected_positions": affected_positions,
-        "contracts_resolved": len(contract_ids)
-    }
 
 @router.put("/{market_id}/close")
 def close_market(
