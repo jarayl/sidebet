@@ -114,13 +114,19 @@ function MarketCard({ market, onBookmarkToggle }: { market: Market; onBookmarkTo
       <div className="p-4 pb-3">
         <div className="flex items-start gap-3 mb-3">
           {/* Market Icon */}
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex-shrink-0 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden">
             {market.image_url ? (
-              <span className="text-2xl">{market.image_url}</span>
+              <img
+                src={`http://localhost:8000${market.image_url}`}
+                alt={market.title}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <span className="text-white text-sm font-bold">
-                {market.category?.charAt(0) || "M"}
-              </span>
+              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span className="text-white text-sm font-bold">
+                  {market.category?.charAt(0) || "M"}
+                </span>
+              </div>
             )}
           </div>
           
@@ -313,16 +319,16 @@ export function MarketsGrid() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-transparent border-b border-gray-200 rounded-none h-auto p-0 w-full justify-start">
+        <TabsList className="bg-gray-100 border border-gray-200 rounded-lg h-auto p-1 w-full justify-start">
         {categories.map((category) => (
           <TabsTrigger 
-              key={category.id}
-              value={category.id}
-              className="bg-transparent border-0 rounded-none px-6 py-4 text-gray-600 font-semibold relative data-[state=active]:bg-transparent data-[state=active]:text-gray-900 hover:text-gray-900 transition-colors data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-0.5 data-[state=active]:after:bg-gray-900"
-          >
-              {category.label}
-          </TabsTrigger>
-        ))}
+             key={category.id}
+             value={category.id}
+             className="bg-transparent border-0 rounded-md px-6 py-3 text-gray-600 font-medium relative data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm hover:text-gray-900 transition-colors"
+         >
+             {category.label}
+         </TabsTrigger>
+       ))}
       </TabsList>
       
       {categories.map((category) => (
@@ -331,6 +337,6 @@ export function MarketsGrid() {
         </TabsContent>
       ))}
     </Tabs>
-    </div>
+   </div>
   );
 } 

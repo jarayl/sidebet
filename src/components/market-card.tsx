@@ -99,7 +99,19 @@ export function MarketCard({ market, onUpdate }: MarketCardProps) {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{market.image_url}</span>
+            {market.image_url ? (
+              <img
+                src={`http://localhost:8000${market.image_url}`}
+                alt={market.title}
+                className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                <span className="text-gray-400 text-lg font-bold">
+                  {market.category?.charAt(0) || "M"}
+                </span>
+              </div>
+            )}
             <div className="text-sm text-gray-500">{market.category}</div>
           </div>
         </div>
@@ -140,7 +152,7 @@ export function MarketCard({ market, onUpdate }: MarketCardProps) {
             disabled={isBookmarking}
             className={`h-8 w-8 p-0 rounded-full transition-colors ${
               market.is_bookmarked 
-                ? "bg-yellow-400 hover:bg-yellow-500 text-white" 
+                ? "bg-black hover:bg-gray-800 text-white" 
                 : "bg-gray-100 hover:bg-gray-200 text-gray-600"
             }`}
           >

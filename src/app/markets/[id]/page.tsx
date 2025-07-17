@@ -288,7 +288,20 @@ export default function MarketDetailPage() {
             
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                {market.image_url ? (
+                  <img
+                    src={`http://localhost:8000${market.image_url}`}
+                    alt={market.title}
+                    className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                    <span className="text-gray-400 text-2xl font-bold">
+                      {market.category?.charAt(0) || "M"}
+                    </span>
+                  </div>
+                )}
+                <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">
                   {market.category}
                 </Badge>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -390,8 +403,8 @@ export default function MarketDetailPage() {
                             onClick={() => handleContractSideSelect(contract, "YES")}
                             className={`px-4 py-2 rounded-lg border-2 transition-all min-w-[80px] ${
                               selectedContract?.contract_id === contract.contract_id && selectedSide === "YES"
-                                ? "border-green-500 bg-green-50 text-green-700"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50"
+                                ? "border-gray-600 bg-gray-50 text-gray-900"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
                             }`}
                           >
                             <div className="text-center">
@@ -406,8 +419,8 @@ export default function MarketDetailPage() {
                             onClick={() => handleContractSideSelect(contract, "NO")}
                             className={`px-4 py-2 rounded-lg border-2 transition-all min-w-[80px] ${
                               selectedContract?.contract_id === contract.contract_id && selectedSide === "NO"
-                                ? "border-red-500 bg-red-50 text-red-700"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-red-300 hover:bg-red-50"
+                                ? "border-gray-600 bg-gray-50 text-gray-900"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
                             }`}
                           >
                             <div className="text-center">
@@ -511,7 +524,7 @@ export default function MarketDetailPage() {
                         onClick={() => setTradeType("BUY")}
                         className={`flex-1 py-3 px-4 text-sm font-semibold rounded-md transition-all ${
                           tradeType === "BUY"
-                            ? "bg-green-500 text-white shadow-sm"
+                            ? "bg-black text-white shadow-sm"
                             : "text-gray-600 hover:text-gray-900"
                         }`}
                       >
@@ -521,7 +534,7 @@ export default function MarketDetailPage() {
                         onClick={() => setTradeType("SELL")}
                         className={`flex-1 py-3 px-4 text-sm font-semibold rounded-md transition-all ${
                           tradeType === "SELL"
-                            ? "bg-red-500 text-white shadow-sm"
+                            ? "bg-gray-800 text-white shadow-sm"
                             : "text-gray-600 hover:text-gray-900"
                         }`}
                       >
@@ -647,8 +660,8 @@ export default function MarketDetailPage() {
                       }
                       className={`w-full py-3 text-lg font-semibold ${
                         tradeType === "BUY" 
-                          ? "bg-green-600 hover:bg-green-700" 
-                          : "bg-red-600 hover:bg-red-700"
+                          ? "bg-black hover:bg-gray-800" 
+                          : "bg-gray-800 hover:bg-gray-700"
                       } text-white`}
                     >
                       {isPlacingOrder 
@@ -683,7 +696,7 @@ export default function MarketDetailPage() {
                         <>
                           {/* Asks (Sell orders) */}
                           <div>
-                            <h4 className="text-sm font-semibold text-red-600 mb-3">Sell Orders</h4>
+                            <h4 className="text-sm font-semibold text-gray-600 mb-3">Sell Orders</h4>
                             <div className="space-y-1">
                               {orderBook.asks.length === 0 ? (
                                 <div className="text-sm text-gray-500 text-center py-4 bg-gray-50 rounded-lg">
@@ -691,8 +704,8 @@ export default function MarketDetailPage() {
                                 </div>
                               ) : (
                                 orderBook.asks.slice(0, 5).map((ask, index) => (
-                                  <div key={index} className="flex justify-between items-center bg-red-50 px-4 py-3 rounded-lg border border-red-100">
-                                    <span className="font-semibold text-red-700">${parseFloat(ask.price).toFixed(2)}</span>
+                                  <div key={index} className="flex justify-between items-center bg-gray-50 px-4 py-3 rounded-lg border border-gray-200">
+                                    <span className="font-semibold text-gray-900">${parseFloat(ask.price).toFixed(2)}</span>
                                     <span className="text-gray-700 font-medium">{ask.quantity.toLocaleString()}</span>
                                   </div>
                                 ))
@@ -711,7 +724,7 @@ export default function MarketDetailPage() {
                                 )}
                               </div>
                               {stats?.market_price !== undefined && stats.market_price !== null && (
-                                <div className="text-xs text-blue-600">
+                                <div className="text-xs text-gray-600">
                                   Market Price: {formatPrice(stats.market_price)}
                                 </div>
                               )}
@@ -720,7 +733,7 @@ export default function MarketDetailPage() {
 
                           {/* Bids (Buy orders) */}
                           <div>
-                            <h4 className="text-sm font-semibold text-green-600 mb-3">Buy Orders</h4>
+                            <h4 className="text-sm font-semibold text-gray-600 mb-3">Buy Orders</h4>
                             <div className="space-y-1">
                               {orderBook.bids.length === 0 ? (
                                 <div className="text-sm text-gray-500 text-center py-4 bg-gray-50 rounded-lg">
@@ -728,8 +741,8 @@ export default function MarketDetailPage() {
                                 </div>
                               ) : (
                                 orderBook.bids.slice(0, 5).map((bid, index) => (
-                                  <div key={index} className="flex justify-between items-center bg-green-50 px-4 py-3 rounded-lg border border-green-100">
-                                    <span className="font-semibold text-green-700">${parseFloat(bid.price).toFixed(2)}</span>
+                                  <div key={index} className="flex justify-between items-center bg-gray-100 px-4 py-3 rounded-lg border border-gray-200">
+                                    <span className="font-semibold text-gray-900">${parseFloat(bid.price).toFixed(2)}</span>
                                     <span className="text-gray-700 font-medium">{bid.quantity.toLocaleString()}</span>
                                   </div>
                                 ))

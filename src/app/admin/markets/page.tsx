@@ -162,19 +162,26 @@ export default function AdminMarkets() {
 
   const handleCreateMarket = async () => {
     try {
-      // Convert datetime-local strings to ISO format for backend
-      const submitData = {
-        ...formData,
-        start_time: new Date(formData.start_time).toISOString(),
-        close_time: new Date(formData.close_time).toISOString(),
-        resolve_time: formData.resolve_time ? new Date(formData.resolve_time).toISOString() : null,
-      };
+      // Create FormData for multipart/form-data submission
+      const submitFormData = new FormData();
+      submitFormData.append('title', formData.title);
+      submitFormData.append('description', formData.description);
+      submitFormData.append('category', formData.category);
+      submitFormData.append('start_time', new Date(formData.start_time).toISOString());
+      submitFormData.append('close_time', new Date(formData.close_time).toISOString());
+      if (formData.resolve_time) {
+        submitFormData.append('resolve_time', new Date(formData.resolve_time).toISOString());
+      }
+      
+      // Add image file if selected
+      if (imageFile) {
+        submitFormData.append('image', imageFile);
+      }
       
       const response = await fetch("http://localhost:8000/api/v1/markets/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(submitData),
+        body: submitFormData, // Don't set Content-Type header, let browser set it with boundary
       });
 
       if (response.ok) {
@@ -198,21 +205,28 @@ export default function AdminMarkets() {
     try {
       console.log("Updating market with data:", formData);
       
-      // Convert datetime-local strings to ISO format for backend
-      const submitData = {
-        ...formData,
-        start_time: new Date(formData.start_time).toISOString(),
-        close_time: new Date(formData.close_time).toISOString(),
-        resolve_time: formData.resolve_time ? new Date(formData.resolve_time).toISOString() : null,
-      };
+      // Create FormData for multipart/form-data submission
+      const submitFormData = new FormData();
+      submitFormData.append('title', formData.title);
+      submitFormData.append('description', formData.description);
+      submitFormData.append('category', formData.category);
+      submitFormData.append('start_time', new Date(formData.start_time).toISOString());
+      submitFormData.append('close_time', new Date(formData.close_time).toISOString());
+      if (formData.resolve_time) {
+        submitFormData.append('resolve_time', new Date(formData.resolve_time).toISOString());
+      }
       
-      console.log("Formatted submit data:", submitData);
+      // Add image file if selected
+      if (imageFile) {
+        submitFormData.append('image', imageFile);
+      }
+      
+      console.log("Formatted submit data:", submitFormData);
       
       const response = await fetch(`http://localhost:8000/api/v1/markets/${editingMarket.market_id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(submitData),
+        body: submitFormData, // Don't set Content-Type header, let browser set it with boundary
       });
 
       if (response.ok) {
@@ -419,7 +433,7 @@ export default function AdminMarkets() {
           });
           // Set image preview for existing image
           if (market.image_url) {
-            setImagePreview(market.image_url);
+            setImagePreview(`http://localhost:8000${market.image_url}`);
           } else {
             setImagePreview("");
           }
@@ -567,7 +581,7 @@ export default function AdminMarkets() {
                                 <img
                                   src={imagePreview}
                                   alt="Market preview"
-                                  className="w-full h-32 object-cover rounded-lg border border-gray-300"
+                                  className="w-full aspect-square object-cover rounded-lg border border-gray-300"
                                 />
                                 <Button
                                   type="button"
@@ -580,7 +594,7 @@ export default function AdminMarkets() {
                                 </Button>
                               </div>
                             ) : (
-                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors aspect-square flex items-center justify-center">
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -775,6 +789,19 @@ export default function AdminMarkets() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
+                        {market.image_url ? (
+                          <img
+                            src={`http://localhost:8000${market.image_url}`}
+                            alt={market.title}
+                            className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                            <span className="text-gray-400 text-lg font-bold">
+                              {market.category?.charAt(0) || "M"}
+                            </span>
+                          </div>
+                        )}
                         <h3 className="text-lg font-semibold text-gray-900">{market.title}</h3>
                         {getStatusBadge(market.status)}
                         <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">

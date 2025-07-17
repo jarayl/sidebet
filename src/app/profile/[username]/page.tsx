@@ -230,7 +230,7 @@ export default function ProfilePage() {
       
       <div className="max-w-5xl mx-auto bg-white">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-blue-400 to-purple-500 h-64 relative">
+        <div className="bg-gray-900 h-64 relative">
           <div className="absolute -bottom-20 left-12">
             {profile.profile_picture ? (
               <img
@@ -372,8 +372,8 @@ export default function ProfilePage() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                  <span className="text-white text-xs font-bold">
+                                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-gray-600 text-xs font-bold">
                                     {bet.market_category?.charAt(0) || "M"}
                                   </span>
                         </div>
@@ -385,7 +385,7 @@ export default function ProfilePage() {
 
                               <div className="flex items-center gap-4 mb-3">
                                 <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
-                              bet.outcome === 'YES' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              bet.outcome === 'YES' ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-900'
                             }`}>
                               {bet.outcome}
                             </span>
@@ -446,8 +446,8 @@ export default function ProfilePage() {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">
+                              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <span className="text-gray-600 text-xs font-bold">
                                   {order.contract.market.category?.charAt(0) || "M"}
                                 </span>
                               </div>
@@ -459,7 +459,7 @@ export default function ProfilePage() {
                         
                             <div className="flex items-center gap-4 mb-2">
                               <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
-                                order.side === 'BUY' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                order.side === 'BUY' ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-900'
                               }`}>
                                 {order.side} {order.contract_side}
                               </span>
@@ -528,10 +528,10 @@ export default function ProfilePage() {
                       <Card key={`activity-${item.type}-${index}-${item.created_at}`} className="hover:shadow-md transition-shadow">
                         <CardContent className="p-6">
                           <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                              {item.type === 'idea_created' && <DollarSign className="w-5 h-5 text-blue-600" />}
-                              {item.type === 'comment_created' && <Clock className="w-5 h-5 text-blue-600" />}
-                              {item.type === 'bet_resolved' && <CheckCircle className="w-5 h-5 text-blue-600" />}
+                            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                              {item.type === 'idea_created' && <DollarSign className="w-5 h-5 text-gray-600" />}
+                              {item.type === 'comment_created' && <Clock className="w-5 h-5 text-gray-600" />}
+                              {item.type === 'bet_resolved' && <CheckCircle className="w-5 h-5 text-gray-600" />}
                             </div>
                             <div className="flex-1">
                             <p className="text-gray-900 text-base">{item.description}</p>

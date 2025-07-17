@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from decimal import Decimal
 from datetime import datetime, timezone
 from sqlalchemy import and_, or_
 import logging
+import os
+import uuid
+from pathlib import Path
 
 from app.api import deps
 from app.models.market import Market
@@ -21,6 +24,61 @@ from app.models.trade import Trade
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+@router.post("/upload-image")
+async def upload_market_image(
+    image: UploadFile = File(...),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Upload a market image (admin only).
+    Returns the image URL that can be used in market creation/update.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can upload market images"
+        )
+    
+    # Validate file type
+    if not image.content_type or not image.content_type.startswith('image/'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File must be an image"
+        )
+    
+    # Validate file size (10MB limit)
+    if image.size and image.size > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size must be under 10MB"
+        )
+    
+    # Create uploads directory if it doesn't exist
+    upload_dir = Path("uploads/market_images")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate unique filename
+    file_extension = image.filename.split('.')[-1] if image.filename else 'jpg'
+    filename = f"{uuid.uuid4()}.{file_extension}"
+    file_path = upload_dir / filename
+    
+    # Save file
+    try:
+        with open(file_path, "wb") as buffer:
+            content = await image.read()
+            buffer.write(content)
+        logger.info(f"Saved market image: {file_path}")
+    except Exception as e:
+        logger.error(f"Failed to save market image: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save image"
+        )
+    
+    # Return the image URL
+    image_url = f"/uploads/market_images/{filename}"
+    return {"image_url": image_url}
 
 @router.get("/search", response_model=List[dict])
 def search_markets(
@@ -109,6 +167,139 @@ def search_markets(
     
     return result
 
+@router.post("/", response_model=MarketResponse)
+async def create_market(
+    title: str = Form(...),
+    description: str = Form(""),
+    category: str = Form(...),
+    start_time: str = Form(...),
+    close_time: str = Form(...),
+    resolve_time: str = Form(""),
+    image: Optional[UploadFile] = File(None),
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+):
+    """
+    Create a new market with image upload (admin only).
+    Creates a default contract. Use /with-contracts for custom contracts.
+    """
+    # Check if user is admin
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can create markets"
+        )
+    
+    # Handle image upload
+    image_url = None
+    if image:
+        # Validate file type
+        if not image.content_type or not image.content_type.startswith('image/'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File must be an image"
+            )
+        
+        # Validate file size (10MB limit)
+        if image.size and image.size > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File size must be under 10MB"
+            )
+        
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path("uploads/market_images")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = image.filename.split('.')[-1] if image.filename else 'jpg'
+        filename = f"{uuid.uuid4()}.{file_extension}"
+        file_path = upload_dir / filename
+        
+        # Save file
+        try:
+            with open(file_path, "wb") as buffer:
+                content = await image.read()
+                buffer.write(content)
+            logger.info(f"Saved market image: {file_path}")
+            image_url = f"/uploads/market_images/{filename}"
+        except Exception as e:
+            logger.error(f"Failed to save market image: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save image"
+            )
+    
+    # Parse datetime strings
+    try:
+        start_time_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+        close_time_dt = datetime.fromisoformat(close_time.replace('Z', '+00:00'))
+        resolve_time_dt = None
+        if resolve_time:
+            resolve_time_dt = datetime.fromisoformat(resolve_time.replace('Z', '+00:00'))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid datetime format: {str(e)}"
+        )
+    
+    # Create market
+    market = Market(
+        title=title,
+        description=description,
+        category=category,
+        image_url=image_url,
+        start_time=start_time_dt,
+        close_time=close_time_dt,
+        resolve_time=resolve_time_dt,
+        status="open"
+    )
+    db.add(market)
+    db.flush()  # Get market ID
+    
+    # Create a default contract
+    default_contract = Contract(
+        market_id=market.market_id,
+        title="Default Contract",
+        description="Default contract for this market",
+        status="open"
+    )
+    db.add(default_contract)
+    
+    db.commit()
+    db.refresh(market)
+    db.refresh(default_contract)
+    
+    # Format response
+    contract_responses = [
+        ContractResponse(
+            contract_id=default_contract.contract_id,
+            title=default_contract.title,
+            description=default_contract.description,
+            status=default_contract.status,
+            resolution=default_contract.resolution,
+            yes_price="No price",
+            no_price="No price",
+            yes_volume=0,
+            no_volume=0
+        )
+    ]
+    
+    return MarketResponse(
+        market_id=market.market_id,
+        title=market.title,
+        description=market.description,
+        category=market.category,
+        image_url=market.image_url,
+        start_time=market.start_time,
+        close_time=market.close_time,
+        resolve_time=market.resolve_time,
+        status=market.status,
+        result=market.result,
+        is_bookmarked=False,
+        contracts=contract_responses
+    )
+
 @router.get("/", response_model=List[MarketResponse])
 def read_markets(
     db: Session = Depends(deps.get_db),
@@ -192,14 +383,15 @@ def read_markets(
     
     return result
 
-@router.post("/", response_model=MarketResponse)
-def create_market(
+@router.post("/with-contracts", response_model=MarketResponse)
+def create_market_with_contracts(
     market_in: MarketCreate,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ):
     """
-    Create a new market with custom options (admin only).
+    Create a new market with contracts using JSON payload (admin only).
+    Use this when you need to specify contracts.
     """
     # Check if user is admin
     if not current_user.is_superuser:
@@ -272,14 +464,20 @@ def create_market(
     )
 
 @router.put("/{market_id}", response_model=MarketResponse)
-def update_market(
+async def update_market(
     market_id: int,
-    market_in: MarketUpdate,
+    title: str = Form(...),
+    description: str = Form(""),
+    category: str = Form(...),
+    start_time: str = Form(...),
+    close_time: str = Form(...),
+    resolve_time: str = Form(""),
+    image: Optional[UploadFile] = File(None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ):
     """
-    Update an existing market and its contracts (admin only).
+    Update an existing market (admin only).
     """
     if not current_user.is_superuser:
         raise HTTPException(
@@ -291,49 +489,68 @@ def update_market(
     if not market:
         raise HTTPException(status_code=404, detail="Market not found")
     
-    # Update market fields
-    market.title = market_in.title
-    market.description = market_in.description
-    market.category = market_in.category
-    market.image_url = market_in.image_url
-    market.start_time = market_in.start_time
-    market.close_time = market_in.close_time
-    
-    # Handle contracts
-    existing_contracts = {c.contract_id: c for c in market.contracts}
-    incoming_contracts = {c.contract_id: c for c in market_in.contracts if c.contract_id}
-    
-    # Delete contracts that are no longer present
-    for contract_id, contract in existing_contracts.items():
-        if contract_id not in incoming_contracts:
-            db.delete(contract)
-            
-    # Update existing and create new contracts
-    new_contracts = []
-    for contract_data in market_in.contracts:
-        if contract_data.contract_id:
-            # Update existing contract
-            contract = existing_contracts.get(contract_data.contract_id)
-            if contract:
-                contract.title = contract_data.title
-                contract.description = contract_data.description
-        else:
-            # Create new contract
-            new_contract = Contract(
-                market_id=market_id,
-                title=contract_data.title,
-                description=contract_data.description,
-                status="open"
+    # Handle image upload
+    if image:
+        # Validate file type
+        if not image.content_type or not image.content_type.startswith('image/'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File must be an image"
             )
-            db.add(new_contract)
-            new_contracts.append(new_contract)
-
+        
+        # Validate file size (10MB limit)
+        if image.size and image.size > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File size must be under 10MB"
+            )
+        
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path("uploads/market_images")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = image.filename.split('.')[-1] if image.filename else 'jpg'
+        filename = f"{uuid.uuid4()}.{file_extension}"
+        file_path = upload_dir / filename
+        
+        # Save file
+        try:
+            with open(file_path, "wb") as buffer:
+                content = await image.read()
+                buffer.write(content)
+            logger.info(f"Saved market image: {file_path}")
+            market.image_url = f"/uploads/market_images/{filename}"
+        except Exception as e:
+            logger.error(f"Failed to save market image: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save image"
+            )
+    
+    # Parse datetime strings
+    try:
+        start_time_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+        close_time_dt = datetime.fromisoformat(close_time.replace('Z', '+00:00'))
+        resolve_time_dt = None
+        if resolve_time:
+            resolve_time_dt = datetime.fromisoformat(resolve_time.replace('Z', '+00:00'))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid datetime format: {str(e)}"
+        )
+    
+    # Update market fields
+    market.title = title
+    market.description = description
+    market.category = category
+    market.start_time = start_time_dt
+    market.close_time = close_time_dt
+    market.resolve_time = resolve_time_dt
+    
     db.commit()
     db.refresh(market)
-
-    # Refresh any new contracts to get their IDs
-    for contract in new_contracts:
-        db.refresh(contract)
     
     # Format the response
     trading_engine = TradingEngine(db)

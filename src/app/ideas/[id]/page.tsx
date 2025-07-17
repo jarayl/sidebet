@@ -72,21 +72,21 @@ export default function IdeaDetailPage() {
     switch (status) {
       case 'pending':
         return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-800 border-gray-200">
             <Clock className="w-4 h-4 mr-2" />
             Under Review
           </Badge>
         );
       case 'accepted':
         return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-800 border-gray-200">
             <CheckCircle className="w-4 h-4 mr-2" />
             Accepted
           </Badge>
         );
       case 'rejected':
         return (
-          <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-800 border-gray-200">
             <XCircle className="w-4 h-4 mr-2" />
             Rejected
           </Badge>
@@ -268,7 +268,7 @@ export default function IdeaDetailPage() {
                 className="w-full bg-transparent border-none focus:ring-0 resize-none p-2 text-lg placeholder-gray-500"
               />
               <div className="flex justify-end mt-2">
-                <Button type="submit" disabled={isSubmittingComment || !newComment.trim()} className="bg-blue-500 hover:bg-blue-600 text-white rounded-full font-bold px-5 py-2 text-sm">
+                <Button type="submit" disabled={isSubmittingComment || !newComment.trim()} className="bg-black hover:bg-gray-800 text-white rounded-full font-bold px-5 py-2 text-sm">
                   {isSubmittingComment ? "Commenting..." : "Comment"}
                 </Button>
               </div>

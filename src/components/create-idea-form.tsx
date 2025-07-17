@@ -163,26 +163,39 @@ export function CreateIdeaForm({ onSubmit, user }: CreateIdeaFormProps) {
 
             <div className="flex justify-between items-center">
               {step === 1 ? (
-                <p className="text-xs text-gray-500">
-                  Your idea will be reviewed by administrators before being turned into a market.
-                </p>
+                <>
+                  <p className="text-xs text-gray-500">
+                    Your idea will be reviewed by administrators before being turned into a market.
+                  </p>
+                  <Button
+                    type="submit"
+                    disabled={!title.trim() || title.length > 200}
+                    className="bg-black hover:bg-gray-800 text-white px-8"
+                  >
+                    Next
+                  </Button>
+                </>
               ) : (
-                <div></div>
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBack}
+                    className="px-8"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || description.length > 1000}
+                    className="bg-black hover:bg-gray-800 text-white px-8"
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit Idea"}
+                  </Button>
+                </>
               )}
-          <Button
-            type="submit"
-                disabled={isSubmitting || (step === 1 && !title.trim())}
-            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full font-bold px-6 py-2"
-          >
-                {isSubmitting 
-                  ? "Submitting..." 
-                  : step === 1 
-                    ? "Next" 
-                    : "Submit Idea"
-                }
-          </Button>
-        </div>
-      </form>
+            </div>
+          </form>
         </div>
       </div>
     </div>

@@ -191,16 +191,16 @@ export default function DashboardPage() {
       <Navbar user={user} />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white">
+      <div className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-2">Welcome back, {user.username}!</h1>
-              <p className="text-blue-100 text-lg">Starting trading on the college betting app</p>
+              <p className="text-gray-300 text-lg">Ready to trade on your predictions</p>
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold">${(user.balance / 100).toFixed(2)}</div>
-              <div className="text-blue-200">Available Balance</div>
+              <div className="text-gray-300">Available Balance</div>
             </div>
           </div>
         </div>
@@ -216,8 +216,8 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-600">Portfolio Value</p>
                   <p className="text-2xl font-bold text-gray-900">${portfolioValue.toFixed(2)}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-gray-600" />
                 </div>
               </div>
             </CardContent>
@@ -228,14 +228,12 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total P&L</p>
-                  <p className={`text-2xl font-bold ${isProfitable ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-2xl font-bold ${isProfitable ? 'text-gray-900' : 'text-gray-900'}`}>
                     {isProfitable ? '+' : ''}${totalPnL.toFixed(2)}
                   </p>
                 </div>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  isProfitable ? 'bg-green-100' : 'bg-red-100'
-                }`}>
-                  <TrendingUp className={`w-6 h-6 ${isProfitable ? 'text-green-600' : 'text-red-600'}`} />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-gray-600" />
                 </div>
               </div>
             </CardContent>
@@ -248,8 +246,8 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-600">Active Positions</p>
                   <p className="text-2xl font-bold text-gray-900">{positions.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Target className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Target className="w-6 h-6 text-gray-600" />
                 </div>
               </div>
             </CardContent>
@@ -262,8 +260,8 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-600">Open Orders</p>
                   <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-gray-600" />
                 </div>
               </div>
             </CardContent>
@@ -277,7 +275,7 @@ export default function DashboardPage() {
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                       <Flame className="w-4 h-4 text-white" />
                     </div>
                     <CardTitle className="text-xl">Trending Markets</CardTitle>
@@ -286,7 +284,7 @@ export default function DashboardPage() {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => router.push("/markets")}
-                    className="text-blue-600 hover:text-blue-700"
+                    className="text-gray-600 hover:text-gray-900"
                   >
                     View All <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -310,7 +308,7 @@ export default function DashboardPage() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">
                               {market.category}
                             </Badge>
                             <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -318,7 +316,7 @@ export default function DashboardPage() {
                               <span>{formatTimeRemaining(market.close_time)}</span>
                             </div>
                           </div>
-                          <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-black transition-colors line-clamp-2">
                             {market.title}
                           </h3>
                         </div>
@@ -333,15 +331,15 @@ export default function DashboardPage() {
                               <div key={contract.contract_id} className="text-center">
                                 <div className="text-xs text-gray-600 mb-1 truncate">{contract.title}</div>
                                 <div className="flex gap-1">
-                                  <div className="flex-1 bg-green-50 border border-green-200 rounded px-2 py-1">
-                                    <div className="text-xs font-medium text-green-700">YES</div>
-                                    <div className="text-sm font-bold text-green-800">
+                                  <div className="flex-1 bg-gray-50 border border-gray-200 rounded px-2 py-1">
+                                    <div className="text-xs font-medium text-gray-700">YES</div>
+                                    <div className="text-sm font-bold text-gray-900">
                                       {yesPrice ? `${yesPrice}¢` : "No price"}
                                     </div>
                                   </div>
-                                  <div className="flex-1 bg-red-50 border border-red-200 rounded px-2 py-1">
-                                    <div className="text-xs font-medium text-red-700">NO</div>
-                                    <div className="text-sm font-bold text-red-800">
+                                  <div className="flex-1 bg-gray-50 border border-gray-200 rounded px-2 py-1">
+                                    <div className="text-xs font-medium text-gray-700">NO</div>
+                                    <div className="text-sm font-bold text-gray-900">
                                       {yesPrice ? `${100 - yesPrice}¢` : "No price"}
                                     </div>
                                   </div>
@@ -361,7 +359,7 @@ export default function DashboardPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                     <Zap className="w-4 h-4 text-white" />
                   </div>
                   <CardTitle className="text-xl">Quick Actions</CardTitle>
@@ -371,7 +369,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <Button 
                     onClick={() => router.push("/markets")}
-                    className="h-20 flex flex-col items-center justify-center bg-blue-600 hover:bg-blue-700 text-white"
+                    className="h-20 flex flex-col items-center justify-center bg-black hover:bg-gray-800 text-white"
                   >
                     <BarChart3 className="w-6 h-6 mb-2" />
                     <span className="font-semibold">Browse Markets</span>
@@ -396,7 +394,7 @@ export default function DashboardPage() {
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                       <Target className="w-4 h-4 text-white" />
                     </div>
                     <CardTitle className="text-lg">Your Positions</CardTitle>
@@ -406,7 +404,7 @@ export default function DashboardPage() {
                       variant="ghost" 
                       size="sm"
                       onClick={() => router.push(`/profile/${user.username}`)}
-                      className="text-blue-600 hover:text-blue-700"
+                      className="text-gray-600 hover:text-gray-900"
                     >
                       View All
                     </Button>
@@ -435,11 +433,11 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${
-                            position.contract_side === 'YES' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            position.contract_side === 'YES' ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-900'
                           }`}>
                             {position.contract_side}
                           </span>
-                          <span className={`text-sm font-semibold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
+                          <span className="text-sm font-semibold text-gray-900">
                             {isProfit ? '+' : ''}${pnl.toFixed(2)}
                           </span>
                         </div>
@@ -461,7 +459,7 @@ export default function DashboardPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                     <Clock className="w-4 h-4 text-white" />
                   </div>
                   <CardTitle className="text-lg">Open Orders</CardTitle>
@@ -483,7 +481,7 @@ export default function DashboardPage() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${
-                          order.side === 'BUY' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          order.side === 'BUY' ? 'bg-gray-100 text-gray-900' : 'bg-gray-100 text-gray-900'
                         }`}>
                           {order.side} {order.contract_side}
                         </span>
@@ -508,7 +506,7 @@ export default function DashboardPage() {
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                     <Activity className="w-4 h-4 text-white" />
                   </div>
                   <CardTitle className="text-lg">Market Activity</CardTitle>
