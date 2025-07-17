@@ -1,3 +1,8 @@
+import uvicorn
+
+# This will import all models and ensure they are registered with SQLAlchemy
+from app.db import base  # noqa
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -44,5 +49,4 @@ async def root():
     return {"message": "Welcome to SideBet API"}
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000) 

@@ -46,53 +46,84 @@ interface SystemMetrics {
   };
 }
 
-interface DashboardStats {
-  total_users: number;
-  active_users: number;
-  total_markets: number;
-  active_markets: number;
-  total_volume: number;
-  total_trades: number;
+interface DashboardOverview {
+  users: {
+    total: number;
+    active: number;
+    recent_24h: number;
+  };
+  markets: {
+    total: number;
+    active: number;
+    recent_24h: number;
+  };
+  trading: {
+    total_trades: number;
+    total_orders: number;
+    active_orders: number;
+    recent_trades_24h: number;
+    total_volume: number;
+    total_balance: number;
+  };
+}
+
+interface RecentActivity {
+  type: string;
+  message: string;
+  timestamp: string;
+  user: string;
+  details?: Record<string, any>;
 }
 
 export default function AdminDashboard() {
   const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [dashboardOverview, setDashboardOverview] = useState<DashboardOverview | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch system metrics (existing endpoint)
-        const metricsRes = await fetch("http://localhost:8000/api/v1/system/performance/summary", {
-          credentials: "include",
-        });
-        if (metricsRes.ok) {
-          const metricsData = await metricsRes.json();
-          setSystemMetrics(metricsData);
+        setError(null);
+        
+        // Fetch all data in parallel
+        const [systemRes, overviewRes, activityRes] = await Promise.all([
+          fetch("http://localhost:8000/api/v1/system/performance/summary", {
+            credentials: "include",
+          }),
+          fetch("http://localhost:8000/api/v1/admin/dashboard/overview", {
+            credentials: "include",
+          }),
+          fetch("http://localhost:8000/api/v1/admin/activity/recent?limit=3", {
+            credentials: "include",
+          })
+        ]);
+
+        if (systemRes.ok) {
+          const systemData = await systemRes.json();
+          setSystemMetrics(systemData);
+        } else {
+          console.error("Failed to fetch system metrics:", await systemRes.text());
         }
 
-        // For now, we'll create mock data for dashboard stats
-        // These would be real API calls in production
-        setDashboardStats({
-          total_users: 1250,
-          active_users: 340,
-          total_markets: 45,
-          active_markets: 23,
-          total_volume: 125000,
-          total_trades: 5600,
-        });
+        if (overviewRes.ok) {
+          const overviewData = await overviewRes.json();
+          setDashboardOverview(overviewData);
+        } else {
+          console.error("Failed to fetch dashboard overview:", await overviewRes.text());
+        }
 
-        setRecentActivity([
-          { type: "market_created", message: "New market created: 'Harvard Basketball Championship'", time: "2 minutes ago", user: "admin" },
-          { type: "user_registered", message: "New user registered: john_doe@college.harvard.edu", time: "5 minutes ago", user: "system" },
-          { type: "market_resolved", message: "Market resolved: 'Next Student Body President'", time: "15 minutes ago", user: "admin" },
-          { type: "high_volume", message: "High trading volume detected on 'Finals Week Stress'", time: "1 hour ago", user: "system" },
-        ]);
+        if (activityRes.ok) {
+          const activityData = await activityRes.json();
+          setRecentActivity(activityData);
+        } else {
+          console.error("Failed to fetch recent activity:", await activityRes.text());
+        }
 
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
+        setError("Failed to load dashboard data. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -113,8 +144,27 @@ export default function AdminDashboard() {
     return `${minutes}m`;
   };
 
+  const formatCurrency = (amount: number) => {
+    return `$${(amount / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  };
+
   const getSystemStatusBadge = () => {
-    if (!systemMetrics) return <Badge variant="secondary">Loading...</Badge>;
+    if (!systemMetrics || !dashboardOverview) return <Badge variant="secondary">Loading...</Badge>;
     
     const successRate = systemMetrics.orders?.success_rate ?? 0;
     const avgLatency = systemMetrics.performance?.avg_latency_ms ?? 0;
@@ -154,6 +204,19 @@ export default function AdminDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <div className="text-lg text-gray-900 mb-2">Error Loading Dashboard</div>
+          <div className="text-gray-600 mb-4">{error}</div>
+          <Button onClick={() => window.location.reload()}>Reload Page</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -166,10 +229,6 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-4">
               {getSystemStatusBadge()}
-              <Button className="bg-purple-600 hover:bg-purple-700">
-                <Settings className="w-4 h-4 mr-2" />
-                System Settings
-              </Button>
             </div>
           </div>
         </div>
@@ -233,7 +292,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Orders</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {systemMetrics?.orders ? systemMetrics.orders.active.toLocaleString() : "---"}
+                    {dashboardOverview?.trading ? dashboardOverview.trading.active_orders.toLocaleString() : "---"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">In progress</p>
                 </div>
@@ -259,27 +318,34 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Total Users</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.total_users?.toLocaleString() ?? "---"}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardOverview?.users?.total?.toLocaleString() ?? "---"}
+                    </p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center text-green-600 text-sm">
                       <ArrowUpRight className="w-4 h-4 mr-1" />
-                      +12%
+                      +{dashboardOverview?.users?.recent_24h ?? 0}
                     </div>
-                    <p className="text-xs text-gray-500">vs last month</p>
+                    <p className="text-xs text-gray-500">last 24h</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="text-sm text-gray-600">Active Users (30d)</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.active_users?.toLocaleString() ?? "---"}</p>
+                    <p className="text-sm text-gray-600">Active Users</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardOverview?.users?.active?.toLocaleString() ?? "---"}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center text-green-600 text-sm">
-                      <ArrowUpRight className="w-4 h-4 mr-1" />
-                      +8%
+                    <div className="flex items-center text-blue-600 text-sm">
+                      <Activity className="w-4 h-4 mr-1" />
+                      {dashboardOverview?.users ? 
+                        `${((dashboardOverview.users.active / dashboardOverview.users.total) * 100).toFixed(1)}%` : 
+                        "---"
+                      }
                     </div>
-                    <p className="text-xs text-gray-500">vs last month</p>
+                    <p className="text-xs text-gray-500">active rate</p>
                   </div>
                 </div>
               </div>
@@ -298,27 +364,34 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Total Markets</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.total_markets ?? "---"}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardOverview?.markets?.total ?? "---"}
+                    </p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center text-blue-600 text-sm">
                       <ArrowUpRight className="w-4 h-4 mr-1" />
-                      +3 this week
+                      +{dashboardOverview?.markets?.recent_24h ?? 0}
                     </div>
-                    <p className="text-xs text-gray-500">New markets</p>
+                    <p className="text-xs text-gray-500">last 24h</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Active Markets</p>
-                    <p className="text-2xl font-bold text-gray-900">{dashboardStats?.active_markets ?? "---"}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardOverview?.markets?.active ?? "---"}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center text-orange-600 text-sm">
-                      <ArrowDownRight className="w-4 h-4 mr-1" />
-                      -2 resolved
+                    <div className="flex items-center text-green-600 text-sm">
+                      <TrendingUp className="w-4 h-4 mr-1" />
+                      {dashboardOverview?.markets ? 
+                        `${((dashboardOverview.markets.active / dashboardOverview.markets.total) * 100).toFixed(1)}%` : 
+                        "---"
+                      }
                     </div>
-                    <p className="text-xs text-gray-500">This week</p>
+                    <p className="text-xs text-gray-500">active rate</p>
                   </div>
                 </div>
               </div>
@@ -340,13 +413,17 @@ export default function AdminDashboard() {
                 <div className="text-center p-6 bg-gradient-to-br from-green-50 to-blue-50 rounded-lg border">
                   <p className="text-sm text-gray-600 mb-2">Total Trading Volume</p>
                   <p className="text-3xl font-bold text-gray-900">
-                    ${dashboardStats?.total_volume?.toLocaleString() ?? "---"}
+                    {dashboardOverview?.trading ? formatCurrency(dashboardOverview.trading.total_volume) : "---"}
                   </p>
-                  <p className="text-sm text-green-600 mt-2">+15% from last month</p>
+                  <p className="text-sm text-green-600 mt-2">
+                    {dashboardOverview?.trading?.recent_trades_24h ?? 0} trades in last 24h
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-lg font-bold text-gray-900">{dashboardStats?.total_trades?.toLocaleString() ?? "---"}</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {dashboardOverview?.trading?.total_trades?.toLocaleString() ?? "---"}
+                    </p>
                     <p className="text-sm text-gray-600">Total Trades</p>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -369,21 +446,28 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 font-medium">{activity.message}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className="text-xs text-gray-500">{activity.time}</p>
-                        <span className="text-xs text-gray-300">•</span>
-                        <p className="text-xs text-gray-500">by {activity.user}</p>
+                {recentActivity.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">
+                    <Activity className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p>No recent activity</p>
+                  </div>
+                ) : (
+                  recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-900 font-medium">{activity.message}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-gray-500">{formatTimeAgo(activity.timestamp)}</p>
+                          <span className="text-xs text-gray-300">•</span>
+                          <p className="text-xs text-gray-500">by {activity.user}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

@@ -14,6 +14,7 @@ class Market(Base):
     start_time = Column(DateTime(timezone=True), nullable=False)  # trading opens
     close_time = Column(DateTime(timezone=True), nullable=False)  # last moment to trade
     resolve_time = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())  # when market was created
     status = Column(String(12), default='open', nullable=False)
     result = Column(String(10))
     

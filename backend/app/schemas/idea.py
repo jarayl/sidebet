@@ -24,6 +24,10 @@ class IdeaUpdate(BaseModel):
 class UserInfo(BaseModel):
     user_id: int
     username: str
+    profile_picture: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class IdeaCommentResponse(BaseModel):
     comment_id: int

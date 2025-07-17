@@ -22,7 +22,7 @@ class Idea(Base):
         CheckConstraint("status IN ('pending', 'accepted', 'rejected')", name='check_idea_status'),
     )
     
-    # Relationships
+    # Relationships - using string references to avoid circular imports
     submitted_by_user = relationship("User", back_populates="ideas")
     linked_market = relationship("Market", back_populates="ideas")
     likes = relationship("IdeaLike", back_populates="idea", cascade="all, delete-orphan")

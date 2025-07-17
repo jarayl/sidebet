@@ -24,7 +24,6 @@ import {
   TrendingUp,
   Search,
   Filter,
-  Download,
   Upload,
   ImageIcon
 } from "lucide-react";
@@ -750,10 +749,6 @@ export default function AdminMarkets() {
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
             </div>
           </CardContent>
         </Card>

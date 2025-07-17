@@ -17,6 +17,7 @@ from app.models.trade import Trade
 from app.models.position import Position
 from app.models.idea import Idea
 from app.schemas.user import UserResponse
+from app.schemas.idea import IdeaResponse
 
 router = APIRouter()
 
@@ -317,32 +318,41 @@ def get_recent_activity(
     
     activities = []
     
-    # Recent user registrations
-    recent_users = db.query(User).order_by(desc(User.created_at)).limit(5).all()
+    # Recent user registrations (last 7 days)
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    recent_users = db.query(User).filter(
+        User.created_at >= seven_days_ago
+    ).order_by(desc(User.created_at)).limit(3).all()
     for user in recent_users:
         activities.append({
             "type": "user_registered",
-            "message": f"New user registered: {user.email}",
+            "message": f"New user registered: {user.username}",
             "timestamp": user.created_at,
             "user": "system",
             "details": {"user_id": user.user_id, "username": user.username}
         })
     
-    # Recent market creations
-    recent_markets = db.query(Market).order_by(desc(Market.start_time)).limit(5).all()
+    # Recent market creations (last 7 days)
+    recent_markets = db.query(Market).filter(
+        Market.created_at >= seven_days_ago
+    ).order_by(desc(Market.created_at)).limit(3).all()
     for market in recent_markets:
         activities.append({
             "type": "market_created",
             "message": f"New market created: {market.title}",
-            "timestamp": market.start_time,
+            "timestamp": market.created_at,
             "user": "admin",
             "details": {"market_id": market.market_id, "category": market.category}
         })
     
-    # Recent market resolutions
+    # Recent market resolutions (last 7 days)
     recent_resolved = db.query(Market).filter(
-        Market.status == "resolved"
-    ).order_by(desc(Market.resolve_time)).limit(5).all()
+        and_(
+            Market.status == "resolved",
+            Market.resolve_time >= seven_days_ago,
+            Market.resolve_time.isnot(None)
+        )
+    ).order_by(desc(Market.resolve_time)).limit(3).all()
     for market in recent_resolved:
         activities.append({
             "type": "market_resolved",
@@ -350,6 +360,23 @@ def get_recent_activity(
             "timestamp": market.resolve_time,
             "user": "admin",
             "details": {"market_id": market.market_id, "result": market.result}
+        })
+    
+    # Recent high-volume trading (last 24 hours)
+    one_day_ago = datetime.now(timezone.utc) - timedelta(days=1)
+    high_volume_markets = db.query(Market).join(Contract).join(Trade).filter(
+        Trade.executed_at >= one_day_ago
+    ).group_by(Market.market_id).having(
+        func.sum(Trade.quantity * Trade.price) > 10000  # $100+ in volume
+    ).order_by(desc(func.max(Trade.executed_at))).limit(2).all()
+    
+    for market in high_volume_markets:
+        activities.append({
+            "type": "high_volume",
+            "message": f"High trading volume in: {market.title}",
+            "timestamp": one_day_ago,  # Approximate timestamp
+            "user": "system",
+            "details": {"market_id": market.market_id, "category": market.category}
         })
     
     # Sort by timestamp and limit
@@ -391,4 +418,116 @@ def delete_user_admin(
     return {
         "message": f"User {username} ({email}) deleted successfully",
         "deleted_user_id": user_id
+    } 
+
+@router.get("/ideas", response_model=List[IdeaResponse])
+def get_all_ideas_admin(
+    status_filter: Optional[str] = Query(None, regex="^(pending|accepted|rejected)$"),
+    limit: int = Query(100, le=200),
+    skip: int = Query(0),
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db),
+):
+    """Get all ideas for admin moderation."""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can view all ideas"
+        )
+    
+    query = db.query(Idea).options(joinedload(Idea.submitted_by_user))
+    
+    if status_filter:
+        query = query.filter(Idea.status == status_filter)
+    
+    # Order by status (pending first), then by creation date (newest first)
+    # Use a simpler approach without case statement
+    ideas = query.order_by(
+        (Idea.status != 'pending').asc(),
+        (Idea.status != 'accepted').asc(), 
+        desc(Idea.created_at)
+    ).offset(skip).limit(limit).all()
+    
+    return ideas
+
+@router.put("/ideas/{idea_id}/status")
+def update_idea_status(
+    idea_id: int,
+    status_data: dict,
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db),
+):
+    """Update idea status (approve/reject)."""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can update idea status"
+        )
+    
+    idea = db.query(Idea).filter(Idea.idea_id == idea_id).first()
+    if not idea:
+        raise HTTPException(status_code=404, detail="Idea not found")
+    
+    new_status = status_data.get("status")
+    if new_status not in ["pending", "accepted", "rejected"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status must be 'pending', 'accepted', or 'rejected'"
+        )
+    
+    old_status = idea.status
+    idea.status = new_status
+    idea.updated_at = func.now()
+    
+    # If linking to a market when approving
+    if "linked_market_id" in status_data and status_data["linked_market_id"]:
+        # Verify the market exists
+        market = db.query(Market).filter(Market.market_id == status_data["linked_market_id"]).first()
+        if not market:
+            raise HTTPException(status_code=404, detail="Linked market not found")
+        idea.linked_market_id = status_data["linked_market_id"]
+    
+    db.commit()
+    db.refresh(idea)
+    
+    return {
+        "message": f"Idea status updated from {old_status} to {new_status}",
+        "idea_id": idea.idea_id,
+        "old_status": old_status,
+        "new_status": new_status,
+        "linked_market_id": idea.linked_market_id
+    }
+
+@router.get("/ideas/stats")
+def get_ideas_statistics(
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db),
+):
+    """Get comprehensive ideas statistics for admin dashboard."""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can view ideas statistics"
+        )
+    
+    total_ideas = db.query(Idea).count()
+    pending_ideas = db.query(Idea).filter(Idea.status == "pending").count()
+    accepted_ideas = db.query(Idea).filter(Idea.status == "accepted").count()
+    rejected_ideas = db.query(Idea).filter(Idea.status == "rejected").count()
+    
+    # Ideas submitted in the last 30 days
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    recent_ideas = db.query(Idea).filter(Idea.created_at >= thirty_days_ago).count()
+    
+    # Ideas with linked markets
+    linked_ideas = db.query(Idea).filter(Idea.linked_market_id.isnot(None)).count()
+    
+    return {
+        "total_ideas": total_ideas,
+        "pending_ideas": pending_ideas,
+        "accepted_ideas": accepted_ideas,
+        "rejected_ideas": rejected_ideas,
+        "recent_ideas_30d": recent_ideas,
+        "linked_to_markets": linked_ideas,
+        "approval_rate": (accepted_ideas / max(1, total_ideas - pending_ideas)) * 100 if total_ideas > pending_ideas else 0
     } 

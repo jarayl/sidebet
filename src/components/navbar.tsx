@@ -29,7 +29,7 @@ export function Navbar({ user }: NavbarProps) {
 
   const navLinks = [
     { label: "Markets", path: "/markets" },
-    { label: "Ideas",   path: "/ideas"   },
+    { label: "Ideas", path: "/ideas" },
   ];
 
   const handleNavigate = (path: string) => {
@@ -38,142 +38,137 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <header className="w-full border-b border-gray-200 bg-white">
-      <div
-        className="flex items-center justify-between px-30"
-        style={{ height: 75 }}
-      >
-        {/* LEFT: Logo, Markets, Ideas with big equal spacing */}
-        <div className="flex items-center space-x-20">
-          {/* Logo */}
-          <button
-            onClick={() => handleNavigate("/dashboard")}
-            className="flex items-center focus:outline-none"
-            aria-label="Go to dashboard"
-            style={{ minWidth: 110, minHeight: 40, marginRight: 20, marginLeft: 15 }}
-          >
-            <div className="w-20 h-10 rounded-full bg-black flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">S</span>
-            </div>
-            <span className="ml-3 text-gray-900 text-2xl font-semibold">
-              SideBet
-            </span>
-          </button>
-
-          {/* Markets & Ideas */}
-          {navLinks.map(({ label, path }) => {
-            const isActive = pathname === path;
-            return (
-              <button
-                key={path}
-                onClick={() => handleNavigate(path)}
-                className={`
-                  relative px-7 py-2 text-base font-medium transition-colors rounded-xl
-                  ${isActive
-                    ? "bg-gray-100 text-black shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50"}
-                `}
-                style={{ minWidth: 110, minHeight: 40, marginRight: 10, marginLeft: 10 }}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {label}
-                {isActive && (
-                  <span className="absolute inset-0 rounded-xl ring-2 ring-gray-200 pointer-events-none" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* RIGHT: Search + User Dropdown or Login */}
-        <div className="flex items-center gap-4">
-          {user && <SearchBar />}
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-3 px-3 py-2 h-14 hover:bg-gray-100 rounded-lg"
-                >
-                  {user.profile_picture ? (
-                    <img
-                      src={`http://localhost:8000${user.profile_picture}`}
-                      alt={user.username}
-                      className="w-11 h-11 rounded-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src="/default_icon.jpg"
-                      alt={user.username}
-                      className="w-11 h-11 rounded-full object-cover"
-                    />
-                  )}
-                  <ChevronDown className="w-5 h-5 text-gray-500" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <div className="px-5 py-4">
-                  <div className="text-lg font-medium text-gray-900">
-                    {user.username}
-                  </div>
-                  {user.email && (
-                    <div className="mt-1 text-base text-gray-500">
-                      {user.email}
-                    </div>
-                  )}
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => handleNavigate(`/profile/${user.username}`)}
-                  className="px-5 py-3 text-lg"
-                >
-                  <User className="w-6 h-6 mr-4" />
-                  Account
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleNavigate("/settings")}
-                  className="px-5 py-3 text-lg"
-                >
-                  <Settings className="w-6 h-6 mr-4" />
-                  Settings
-                </DropdownMenuItem>
-                {user.is_superuser && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => handleNavigate("/admin")}
-                      className="px-5 py-3 text-lg text-purple-600 focus:text-purple-700 focus:bg-purple-50"
-                    >
-                      <Shield className="w-6 h-6 mr-4" />
-                      Admin Panel
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await fetch("http://localhost:8000/api/v1/auth/logout", {
-                      method: "POST",
-                      credentials: "include",
-                    });
-                    router.push("/login");
-                  }}
-                  className="px-5 py-3 text-lg text-red-600 focus:text-red-700 focus:bg-red-50"
-                >
-                  <LogOut className="w-6 h-6 mr-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button
-              onClick={() => handleNavigate("/login")}
-              variant="default"
-              size="lg"
-              className="px-6 py-3 h-14 text-base"
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex items-center justify-between h-16">
+          {/* LEFT: Logo and Navigation */}
+          <div className="flex items-center space-x-8">
+            {/* Logo - matching landing page */}
+            <button
+              onClick={() => handleNavigate("/dashboard")}
+              className="flex items-center focus:outline-none"
+              aria-label="Go to dashboard"
             >
-              Login
-            </Button>
-          )}
+              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
+                <span className="text-white text-lg font-bold">S</span>
+              </div>
+              <span className="ml-3 text-gray-900 text-xl font-semibold">
+                SideBet
+              </span>
+            </button>
+
+            {/* Navigation Links */}
+            <nav className="flex items-center space-x-1">
+              {navLinks.map(({ label, path }) => {
+                const isActive = pathname === path;
+                return (
+                  <button
+                    key={path}
+                    onClick={() => handleNavigate(path)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-gray-100 text-gray-900"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* RIGHT: Search and User Menu */}
+          <div className="flex items-center space-x-4">
+            {user && <SearchBar />}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center space-x-2 px-3 py-2 h-10 hover:bg-gray-50 rounded-lg"
+                  >
+                    {user.profile_picture ? (
+                      <img
+                        src={`http://localhost:8000${user.profile_picture}`}
+                        alt={user.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <img
+                        src="/default_icon.jpg"
+                        alt={user.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    )}
+                    <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                      {user.username}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-4 py-3">
+                    <div className="text-sm font-medium text-gray-900">
+                      {user.username}
+                    </div>
+                    {user.email && (
+                      <div className="text-sm text-gray-500 truncate">
+                        {user.email}
+                      </div>
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => handleNavigate(`/profile/${user.username}`)}
+                    className="px-4 py-2"
+                  >
+                    <User className="w-4 h-4 mr-3" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleNavigate("/settings")}
+                    className="px-4 py-2"
+                  >
+                    <Settings className="w-4 h-4 mr-3" />
+                    Settings
+                  </DropdownMenuItem>
+                  {user.is_superuser && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleNavigate("/admin")}
+                        className="px-4 py-2 text-purple-600 focus:text-purple-700 focus:bg-purple-50"
+                      >
+                        <Shield className="w-4 h-4 mr-3" />
+                        Admin Panel
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await fetch("http://localhost:8000/api/v1/auth/logout", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      router.push("/login");
+                    }}
+                    className="px-4 py-2 text-red-600 focus:text-red-700 focus:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                onClick={() => handleNavigate("/login")}
+                className="bg-black hover:bg-gray-800 text-white"
+              >
+                Log In
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </header>

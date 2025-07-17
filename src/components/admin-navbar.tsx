@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, User, Shield, Bell, Search } from "lucide-react";
+import { Settings, LogOut, User, Shield } from "lucide-react";
 
 interface AdminNavbarProps {
   user: {
@@ -21,7 +21,6 @@ interface AdminNavbarProps {
 export function AdminNavbar({ user }: AdminNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [notifications] = useState(3); // Mock notification count
 
   const handleLogout = async () => {
     try {
@@ -38,8 +37,8 @@ export function AdminNavbar({ user }: AdminNavbarProps) {
   const navItems = [
     { href: "/admin/dashboard", label: "Dashboard" },
     { href: "/admin/markets", label: "Markets" },
+    { href: "/admin/ideas", label: "Ideas" },
     { href: "/admin/users", label: "Users" },
-    { href: "/admin/system", label: "System" },
   ];
 
   if (!user) return null;
@@ -80,23 +79,8 @@ export function AdminNavbar({ user }: AdminNavbarProps) {
             </nav>
           </div>
 
-          {/* Right side - Search, Notifications, User Menu */}
+          {/* Right side - User Menu */}
           <div className="flex items-center gap-4">
-            {/* Quick Search */}
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-              <Search className="w-4 h-4" />
-            </Button>
-
-            {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative text-gray-600 hover:text-gray-900">
-              <Bell className="w-4 h-4" />
-              {notifications > 0 && (
-                <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs bg-red-500 hover:bg-red-500">
-                  {notifications}
-                </Badge>
-              )}
-            </Button>
-
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -125,19 +109,6 @@ export function AdminNavbar({ user }: AdminNavbarProps) {
                   <p className="text-sm font-medium text-gray-900">{user.username}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
-                <DropdownMenuItem asChild>
-                  <Link href={`/profile/${user.username}`} className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    View Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="flex items-center gap-2">
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard" className="flex items-center gap-2">
                     <User className="w-4 h-4" />
