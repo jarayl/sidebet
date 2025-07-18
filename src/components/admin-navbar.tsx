@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Settings, LogOut, User, Shield } from "lucide-react";
+import { config } from "@/lib/config";
 
 interface AdminNavbarProps {
   user: {
@@ -24,7 +25,7 @@ export function AdminNavbar({ user }: AdminNavbarProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:8000/api/v1/auth/logout", {
+      await fetch(`${config.apiUrl}/api/v1/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
@@ -87,13 +88,13 @@ export function AdminNavbar({ user }: AdminNavbarProps) {
                 <Button variant="ghost" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50">
                   {user.profile_picture ? (
                     <img
-                      src={`http://localhost:8000${user.profile_picture}`}
+                      src={`${config.apiUrl}${user.profile_picture}`}
                       alt={user.username}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
                     <img
-                      src="/default_icon.jpg"
+                      src={`${config.apiUrl}/public/default_icon.jpg`}
                       alt={user.username}
                       className="w-8 h-8 rounded-full object-cover"
                     />

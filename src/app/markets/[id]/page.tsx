@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar";
@@ -66,7 +67,7 @@ export default function MarketDetailPage() {
   const fetchData = async () => {
     try {
       // Fetch user info
-      const userRes = await fetch("http://localhost:8000/api/v1/users/me", {
+      const userRes = await fetch(`${config.apiUrl}/api/v1/users/me`, {
         credentials: "include",
       });
       if (userRes.ok) {
@@ -75,7 +76,7 @@ export default function MarketDetailPage() {
       }
 
       // Fetch market details
-      const marketRes = await fetch(`http://localhost:8000/api/v1/markets/${marketId}`, {
+      const marketRes = await fetch(`${config.apiUrl}/api/v1/markets/${marketId}`, {
         credentials: "include",
       });
       if (!marketRes.ok) throw new Error("Failed to fetch market details");
@@ -83,7 +84,7 @@ export default function MarketDetailPage() {
       setMarket(marketData);
 
       // Fetch price history
-      const priceHistoryRes = await fetch(`http://localhost:8000/api/v1/markets/${marketId}/price-history`, {
+      const priceHistoryRes = await fetch(`${config.apiUrl}/api/v1/markets/${marketId}/price-history`, {
         credentials: "include",
       });
       if (priceHistoryRes.ok) {
@@ -92,7 +93,7 @@ export default function MarketDetailPage() {
       }
 
       // Fetch user positions for this market
-      const positionsRes = await fetch(`http://localhost:8000/api/v1/users/positions?market_id=${marketId}`, {
+      const positionsRes = await fetch(`${config.apiUrl}/api/v1/users/positions?market_id=${marketId}`, {
         credentials: "include",
       });
       if (positionsRes.ok) {
@@ -155,7 +156,7 @@ export default function MarketDetailPage() {
     setIsPlacingOrder(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/markets/${marketId}/orders`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/markets/${marketId}/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -290,7 +291,7 @@ export default function MarketDetailPage() {
               <div className="flex items-center gap-3 mb-3">
                 {market.image_url ? (
                   <img
-                    src={`http://localhost:8000${market.image_url}`}
+                    src={`${config.apiUrl}${market.image_url}`}
                     alt={market.title}
                     className="w-16 h-16 rounded-lg object-cover border border-gray-200"
                   />

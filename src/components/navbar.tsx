@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SearchBar } from "@/components/search-bar";
+import { config } from "@/lib/config";
 
 interface UserType {
   email?: string;
@@ -89,13 +90,13 @@ export function Navbar({ user }: NavbarProps) {
                 >
                   {user.profile_picture ? (
                     <img
-                      src={`http://localhost:8000${user.profile_picture}`}
+                      src={`${config.apiUrl}${user.profile_picture}`}
                       alt={user.username}
                         className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
                     <img
-                      src="/default_icon.jpg"
+                      src={`${config.apiUrl}/public/default_icon.jpg`}
                       alt={user.username}
                         className="w-8 h-8 rounded-full object-cover"
                     />
@@ -147,7 +148,7 @@ export function Navbar({ user }: NavbarProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
-                    await fetch("http://localhost:8000/api/v1/auth/logout", {
+                    await fetch(`${config.apiUrl}/api/v1/auth/logout`, {
                       method: "POST",
                       credentials: "include",
                     });

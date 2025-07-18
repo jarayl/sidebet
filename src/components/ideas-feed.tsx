@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { IdeaCard } from "./idea-card";
 import { CreateIdeaForm } from "./create-idea-form";
@@ -18,7 +19,7 @@ export function IdeasFeed({ filter, user }: IdeasFeedProps) {
   const fetchIdeas = async () => {
     try {
     setIsLoading(true);
-      const response = await fetch(`http://localhost:8000/api/v1/ideas/?filter_type=${filter}`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/ideas/?filter_type=${filter}`, {
         credentials: "include",
       });
 

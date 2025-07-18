@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,7 +73,7 @@ export function TradingInterface({
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/markets/${marketId}/orders`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/markets/${marketId}/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

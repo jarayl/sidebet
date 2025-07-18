@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 import secrets
 
 class Settings(BaseSettings):
@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""  # Your Gmail address
     SMTP_PASSWORD: str = ""  # Your Gmail app password
     FRONTEND_URL: str = "http://localhost:3000"
+    
+    # API Base URL
+    API_BASE_URL: str = "http://localhost:8000"
     
     class Config:
         case_sensitive = True

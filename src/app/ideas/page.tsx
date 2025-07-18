@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
@@ -19,7 +20,7 @@ export default function IdeasPage() {
   const [activeFilter, setActiveFilter] = useState("home");
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/v1/users/me", {
+      fetch(`${config.apiUrl}/api/v1/users/me`, {
       credentials: "include",
     })
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Not authenticated"))))

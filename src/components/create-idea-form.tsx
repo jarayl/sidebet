@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,7 @@ export function CreateIdeaForm({ onSubmit, user }: CreateIdeaFormProps) {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/ideas/", {
+      const response = await fetch(`${config.apiUrl}/api/v1/ideas/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

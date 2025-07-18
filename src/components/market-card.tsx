@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Check } from "lucide-react";
 import type { Market, ContractResponse } from "@/lib/types";
+import { config } from "@/lib/config";
 
 interface MarketPrice {
   contract_id: number;
@@ -29,7 +30,7 @@ export function MarketCard({ market, onUpdate }: MarketCardProps) {
   useEffect(() => {
     const fetchMarketPrices = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/markets/${market.market_id}/market-prices`, {
+        const response = await fetch(`${config.apiUrl}/api/v1/markets/${market.market_id}/market-prices`, {
           credentials: "include",
         });
         
@@ -53,7 +54,7 @@ export function MarketCard({ market, onUpdate }: MarketCardProps) {
     
     setIsBookmarking(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/markets/${market.market_id}/bookmark`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/markets/${market.market_id}/bookmark`, {
         method: "POST",
         credentials: "include",
       });
@@ -101,7 +102,7 @@ export function MarketCard({ market, onUpdate }: MarketCardProps) {
           <div className="flex items-center gap-3">
             {market.image_url ? (
               <img
-                src={`http://localhost:8000${market.image_url}`}
+                src={`${config.apiUrl}${market.image_url}`}
                 alt={market.title}
                 className="w-12 h-12 rounded-lg object-cover border border-gray-200"
               />

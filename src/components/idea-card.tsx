@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Heart, MessageCircle, Bookmark, CheckCircle, Clock, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Idea } from "@/lib/types";
+import { config } from "@/lib/config";
 
 interface IdeaCardProps {
   idea: Idea;
@@ -97,13 +98,13 @@ export function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
       <div className="flex items-start space-x-3">
         {idea.submitted_by_user?.profile_picture ? (
           <img
-            src={`http://localhost:8000${idea.submitted_by_user.profile_picture}`}
+            src={`${config.apiUrl}${idea.submitted_by_user.profile_picture}`}
             alt={idea.submitted_by_user.username}
             className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
           />
         ) : (
           <img
-            src="/default_icon.jpg"
+            src={`${config.apiUrl}/public/default_icon.jpg`}
             alt={idea.submitted_by_user?.username || "User"}
             className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
           />
@@ -152,7 +153,7 @@ export function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
               isActive={idea.is_liked}
               activeColor="text-red-500"
               hoverColor="hover:text-red-500"
-              onClick={() => handleAction(`http://localhost:8000/api/v1/ideas/${idea.idea_id}/like`, 'like')}
+              onClick={() => handleAction(`${config.apiUrl}/api/v1/ideas/${idea.idea_id}/like`, 'like')}
               disabled={isLoading}
             />
             <ActionButton
@@ -160,7 +161,7 @@ export function IdeaCard({ idea, onUpdate, onDelete }: IdeaCardProps) {
               isActive={idea.is_bookmarked}
               activeColor="text-yellow-500"
               hoverColor="hover:text-yellow-500"
-              onClick={() => handleAction(`http://localhost:8000/api/v1/ideas/${idea.idea_id}/bookmark`, 'bookmark')}
+              onClick={() => handleAction(`${config.apiUrl}/api/v1/ideas/${idea.idea_id}/bookmark`, 'bookmark')}
               disabled={isLoading}
             />
           </div>

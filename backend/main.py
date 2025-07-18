@@ -44,6 +44,12 @@ if not os.path.exists(uploads_dir):
     os.makedirs(uploads_dir)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
+# Mount static files for public assets (like default profile picture)
+public_dir = "public"
+if not os.path.exists(public_dir):
+    os.makedirs(public_dir)
+app.mount("/public", StaticFiles(directory=public_dir), name="public")
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to SideBet API"}

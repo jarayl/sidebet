@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar";
@@ -24,12 +25,12 @@ export default function IdeaDetailPage() {
 
   const fetchPageData = async () => {
     try {
-      const userRes = await fetch("http://localhost:8000/api/v1/users/me", { credentials: "include" });
+      const userRes = await fetch(`${config.apiUrl}/api/v1/users/me`, { credentials: "include" });
       if (!userRes.ok) throw new Error("Not authenticated");
       const userData = await userRes.json();
       setUser(userData);
 
-      const ideaRes = await fetch(`http://localhost:8000/api/v1/ideas/${ideaId}`, { credentials: "include" });
+      const ideaRes = await fetch(`${config.apiUrl}/api/v1/ideas/${ideaId}`, { credentials: "include" });
       if (!ideaRes.ok) throw new Error("Failed to fetch idea");
       const ideaData = await ideaRes.json();
       setIdea(ideaData);
@@ -115,7 +116,7 @@ export default function IdeaDetailPage() {
 
     setIsSubmittingComment(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/ideas/${idea.idea_id}/comments`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/ideas/${idea.idea_id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -182,13 +183,13 @@ export default function IdeaDetailPage() {
           <div className="flex items-start space-x-4 mb-4">
             {idea.submitted_by_user?.profile_picture ? (
               <img
-                src={`http://localhost:8000${idea.submitted_by_user.profile_picture}`}
+                src={`${config.apiUrl}${idea.submitted_by_user.profile_picture}`}
                 alt={idea.submitted_by_user.username}
                 className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
               />
             ) : (
               <img
-                src="/default_icon.jpg"
+                src={`${config.apiUrl}/public/default_icon.jpg`}
                 alt={idea.submitted_by_user?.username || "User"}
                 className="w-12 h-12 rounded-full flex-shrink-0 object-cover"
               />
@@ -239,8 +240,8 @@ export default function IdeaDetailPage() {
 
           <div className="flex items-center justify-around mt-1 text-gray-500">
             <ActionButton icon={MessageCircle} hoverColor="hover:text-blue-500" />
-            <ActionButton icon={Heart} isActive={idea.is_liked} activeColor="text-red-500" hoverColor="hover:text-red-500" onClick={() => handleAction(`http://localhost:8000/api/v1/ideas/${idea.idea_id}/like`)} />
-            <ActionButton icon={Bookmark} isActive={idea.is_bookmarked} activeColor="text-yellow-500" hoverColor="hover:text-yellow-500" onClick={() => handleAction(`http://localhost:8000/api/v1/ideas/${idea.idea_id}/bookmark`)} />
+            <ActionButton icon={Heart} isActive={idea.is_liked} activeColor="text-red-500" hoverColor="hover:text-red-500" onClick={() => handleAction(`${config.apiUrl}/api/v1/ideas/${idea.idea_id}/like`)} />
+            <ActionButton icon={Bookmark} isActive={idea.is_bookmarked} activeColor="text-yellow-500" hoverColor="hover:text-yellow-500" onClick={() => handleAction(`${config.apiUrl}/api/v1/ideas/${idea.idea_id}/bookmark`)} />
           </div>
         </div>
 
@@ -248,13 +249,13 @@ export default function IdeaDetailPage() {
           <form onSubmit={handleSubmitComment} className="flex items-start space-x-4">
             {user?.profile_picture ? (
               <img
-                src={`http://localhost:8000${user.profile_picture}`}
+                src={`${config.apiUrl}${user.profile_picture}`}
                 alt={user.username}
                 className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
               />
             ) : (
               <img
-                src="/default_icon.jpg"
+                src={`${config.apiUrl}/public/default_icon.jpg`}
                 alt={user?.username || "User"}
                 className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
               />
@@ -282,13 +283,13 @@ export default function IdeaDetailPage() {
               <div className="flex items-start space-x-3">
                 {comment.user.profile_picture ? (
                   <img
-                    src={`http://localhost:8000${comment.user.profile_picture}`}
+                    src={`${config.apiUrl}${comment.user.profile_picture}`}
                     alt={comment.user.username}
                     className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
                   />
                 ) : (
                   <img
-                    src="/default_icon.jpg"
+                    src={`${config.apiUrl}/public/default_icon.jpg`}
                     alt={comment.user.username}
                     className="w-11 h-11 rounded-full flex-shrink-0 object-cover"
                   />

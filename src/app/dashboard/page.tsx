@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
@@ -90,27 +91,27 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
     // Fetch user data
-        const userRes = await fetch("http://localhost:8000/api/v1/users/me", { credentials: "include" });
+        const userRes = await fetch(`${config.apiUrl}/api/v1/users/me`, { credentials: "include" });
         if (!userRes.ok) throw new Error("Not authenticated");
         const userData = await userRes.json();
         setUser(userData);
 
         // Fetch trending markets
-        const marketsRes = await fetch("http://localhost:8000/api/v1/markets/", { credentials: "include" });
+        const marketsRes = await fetch(`${config.apiUrl}/api/v1/markets/`, { credentials: "include" });
         if (marketsRes.ok) {
           const marketsData = await marketsRes.json();
           setMarkets(marketsData.slice(0, 6)); // Show top 6 markets
         }
 
         // Fetch user positions
-        const positionsRes = await fetch("http://localhost:8000/api/v1/users/positions", { credentials: "include" });
+        const positionsRes = await fetch(`${config.apiUrl}/api/v1/users/positions`, { credentials: "include" });
         if (positionsRes.ok) {
           const positionsData = await positionsRes.json();
           setPositions(positionsData.slice(0, 4)); // Show top 4 positions
         }
 
         // Fetch user orders
-        const ordersRes = await fetch("http://localhost:8000/api/v1/orders/", { credentials: "include" });
+        const ordersRes = await fetch(`${config.apiUrl}/api/v1/orders/`, { credentials: "include" });
         if (ordersRes.ok) {
           const ordersData = await ordersRes.json();
           setOrders(ordersData.filter((order: Order) => order.status === 'open' || order.status === 'partially_filled').slice(0, 3));

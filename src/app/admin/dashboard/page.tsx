@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,13 +90,13 @@ export default function AdminDashboard() {
         
         // Fetch all data in parallel
         const [systemRes, overviewRes, activityRes] = await Promise.all([
-          fetch("http://localhost:8000/api/v1/system/performance/summary", {
+          fetch(`${config.apiUrl}/api/v1/system/performance/summary`, {
             credentials: "include",
           }),
-          fetch("http://localhost:8000/api/v1/admin/dashboard/overview", {
+          fetch(`${config.apiUrl}/api/v1/admin/dashboard/overview`, {
             credentials: "include",
           }),
-          fetch("http://localhost:8000/api/v1/admin/activity/recent?limit=3", {
+          fetch(`${config.apiUrl}/api/v1/admin/activity/recent?limit=3`, {
             credentials: "include",
           })
         ]);

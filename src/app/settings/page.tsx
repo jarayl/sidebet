@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { ArrowLeft, Upload, Trash2 } from "lucide-react";
+import { config } from "@/lib/config";
 // No longer using next/image for the preview
 // import Image from "next/image";
 
@@ -46,7 +47,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/users/me", {
+        const response = await fetch(`${config.apiUrl}/api/v1/users/me`, {
           credentials: "include",
         });
         if (!response.ok) throw new Error("Not authenticated");
@@ -56,8 +57,8 @@ export default function SettingsPage() {
         
         // Set both current and original profile picture
         const currentPicture = userData.profile_picture 
-          ? `http://localhost:8000${userData.profile_picture}` 
-          : "/default_icon.jpg";
+          ? `${config.apiUrl}${userData.profile_picture}` 
+          : `${config.apiUrl}/public/default_icon.jpg`;
         setProfilePicturePreview(currentPicture);
         setOriginalProfilePicture(currentPicture);
       } catch (err) {
@@ -141,7 +142,7 @@ export default function SettingsPage() {
         formData.append("profile_picture", profilePicture);
       }
 
-      const response = await fetch("http://localhost:8000/api/v1/users/profile", {
+      const response = await fetch(`${config.apiUrl}/api/v1/users/profile`, {
         method: "PUT",
         credentials: "include",
         body: formData,
@@ -158,8 +159,8 @@ export default function SettingsPage() {
       
       // Update the original profile picture reference and clear the pending file
       const newPicture = updatedUser.profile_picture 
-        ? `http://localhost:8000${updatedUser.profile_picture}` 
-        : "/default_icon.jpg";
+        ? `${config.apiUrl}${updatedUser.profile_picture}` 
+        : `${config.apiUrl}/public/default_icon.jpg`;
       setOriginalProfilePicture(newPicture);
       setProfilePicturePreview(newPicture);
       setProfilePicture(null);
@@ -195,7 +196,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/users/password", {
+      const response = await fetch(`${config.apiUrl}/api/v1/users/password`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -227,7 +228,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/users/me", {
+      const response = await fetch(`${config.apiUrl}/api/v1/users/me`, {
         method: "DELETE",
         credentials: "include",
       });

@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +40,7 @@ async function getMarkets(category?: string, bookmarkedOnly: boolean = false): P
   if (category && category !== "All") params.append("category", category);
   if (bookmarkedOnly) params.append("bookmarked_only", "true");
   
-  const response = await fetch(`http://localhost:8000/api/v1/markets?${params}`, {
+  const response = await fetch(`${config.apiUrl}/api/v1/markets?${params}`, {
     credentials: "include",
   });
   
@@ -48,7 +49,7 @@ async function getMarkets(category?: string, bookmarkedOnly: boolean = false): P
 }
 
 async function toggleBookmark(marketId: number): Promise<{ is_bookmarked: boolean }> {
-  const response = await fetch(`http://localhost:8000/api/v1/markets/${marketId}/bookmark`, {
+  const response = await fetch(`${config.apiUrl}/api/v1/markets/${marketId}/bookmark`, {
     method: "POST",
     credentials: "include",
   });
@@ -117,7 +118,7 @@ function MarketCard({ market, onBookmarkToggle }: { market: Market; onBookmarkTo
           <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden">
             {market.image_url ? (
               <img
-                src={`http://localhost:8000${market.image_url}`}
+                src={`${config.apiUrl}${market.image_url}`}
                 alt={market.title}
                 className="w-full h-full object-cover"
               />

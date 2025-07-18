@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar";
@@ -51,13 +52,13 @@ export default function ProfilePage() {
     const fetchData = async () => {
       try {
         // Get current user
-        const userRes = await fetch("http://localhost:8000/api/v1/users/me", { credentials: "include" });
+        const userRes = await fetch(`${config.apiUrl}/api/v1/users/me`, { credentials: "include" });
         if (!userRes.ok) throw new Error("Not authenticated");
         const userData = await userRes.json();
         setCurrentUser(userData);
 
         // Get profile data
-        const profileRes = await fetch(`http://localhost:8000/api/v1/profiles/${username}`, { credentials: "include" });
+        const profileRes = await fetch(`${config.apiUrl}/api/v1/profiles/${username}`, { credentials: "include" });
         if (!profileRes.ok) throw new Error("Profile not found");
         const profileData = await profileRes.json();
         setProfile(profileData);
@@ -65,14 +66,14 @@ export default function ProfilePage() {
 
         // Get activity if it's own profile
         if (profileData.is_own_profile) {
-          const activityRes = await fetch(`http://localhost:8000/api/v1/profiles/${username}/activity`, { credentials: "include" });
+          const activityRes = await fetch(`${config.apiUrl}/api/v1/profiles/${username}/activity`, { credentials: "include" });
           if (activityRes.ok) {
             const activityData = await activityRes.json();
             setActivity(activityData);
           }
 
           // Get user's orders
-          const ordersRes = await fetch("http://localhost:8000/api/v1/orders/", { credentials: "include" });
+          const ordersRes = await fetch(`${config.apiUrl}/api/v1/orders/`, { credentials: "include" });
           if (ordersRes.ok) {
             const ordersData = await ordersRes.json();
             setOrders(ordersData);
@@ -96,7 +97,7 @@ export default function ProfilePage() {
     if (!profile) return;
     
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/profiles/${username}/follow`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/profiles/${username}/follow`, {
         method: "POST",
         credentials: "include",
       });
@@ -234,13 +235,13 @@ export default function ProfilePage() {
           <div className="absolute -bottom-20 left-12">
             {profile.profile_picture ? (
               <img
-                src={`http://localhost:8000${profile.profile_picture}`}
+                src={`${config.apiUrl}${profile.profile_picture}`}
                 alt={profile.username}
                 className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
               />
             ) : (
               <img
-                src="/default_icon.jpg"
+                src={`${config.apiUrl}/public/default_icon.jpg`}
                 alt={profile.username}
                 className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
               />

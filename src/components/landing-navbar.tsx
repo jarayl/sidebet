@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ export function LandingNavbar() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/users/me", {
+        const response = await fetch(`${config.apiUrl}/api/v1/users/me`, {
           credentials: "include",
         });
 

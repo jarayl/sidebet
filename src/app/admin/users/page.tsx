@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,7 +73,7 @@ export default function AdminUsers() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/users/", {
+      const response = await fetch(`${config.apiUrl}/api/v1/users/`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -184,7 +185,7 @@ export default function AdminUsers() {
           break;
       }
 
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
+              const response = await fetch(`${config.apiUrl}${endpoint}`, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -210,7 +211,7 @@ export default function AdminUsers() {
       const amount = parseInt(balanceAmount) * 100; // Convert to cents
       const finalAmount = balanceOperation === "subtract" ? -amount : amount;
 
-      const response = await fetch("http://localhost:8000/api/v1/users/balance/add", {
+      const response = await fetch(`${config.apiUrl}/api/v1/users/balance/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -461,17 +462,17 @@ export default function AdminUsers() {
                           <div className="flex items-center gap-3">
                             {user.profile_picture ? (
                               <img
-                                src={`http://localhost:8000${user.profile_picture}`}
+                                src={`${config.apiUrl}${user.profile_picture}`}
                                 alt={user.username}
                                 className="w-10 h-10 rounded-full object-cover"
                               />
-                            ) : (
-                              <img
-                                src="/default_icon.jpg"
-                                alt={user.username}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            )}
+                                                          ) : (
+                                <img
+                                  src={`${config.apiUrl}/public/default_icon.jpg`}
+                                  alt={user.username}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              )}
                             <div>
                               <p className="font-medium text-gray-900">{user.username}</p>
                               <p className="text-sm text-gray-500">{user.email}</p>
@@ -507,13 +508,13 @@ export default function AdminUsers() {
                 <DialogTitle className="flex items-center gap-3">
                   {selectedUser.profile_picture ? (
                     <img
-                      src={`http://localhost:8000${selectedUser.profile_picture}`}
+                      src={`${config.apiUrl}${selectedUser.profile_picture}`}
                       alt={selectedUser.username}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                   ) : (
                     <img
-                      src="/default_icon.jpg"
+                      src={`${config.apiUrl}/public/default_icon.jpg`}
                       alt={selectedUser.username}
                       className="w-12 h-12 rounded-full object-cover"
                     />

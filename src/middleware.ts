@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { config as appConfig } from "@/lib/config";
 
 // List of routes that are considered public and do not require authentication
 const publicRoutes = ["/login", "/register", "/verify-email", "/"];
@@ -23,7 +24,7 @@ export async function middleware(request: NextRequest) {
   let user = null;
   if (token) {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/users/me", {
+      const res = await fetch(`${appConfig.apiUrl}/api/v1/users/me`, {
         headers: {
           Cookie: `token=${token}`,
         },

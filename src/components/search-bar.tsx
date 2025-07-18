@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, User, TrendingUp, Clock, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { config } from "@/lib/config";
 
 interface SearchUser {
   user_id: number;
@@ -94,10 +95,10 @@ export function SearchBar({ className = "" }: SearchBarProps) {
     try {
       // Search users and markets in parallel
       const [usersRes, marketsRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/v1/users/search?q=${encodeURIComponent(searchQuery)}`, {
+        fetch(`${config.apiUrl}/api/v1/users/search?q=${encodeURIComponent(searchQuery)}`, {
           credentials: "include",
         }),
-        fetch(`http://localhost:8000/api/v1/markets/search?q=${encodeURIComponent(searchQuery)}`, {
+        fetch(`${config.apiUrl}/api/v1/markets/search?q=${encodeURIComponent(searchQuery)}`, {
           credentials: "include",
         }),
       ]);
@@ -287,19 +288,19 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                             selectedIndex === index ? "bg-blue-50 border-l-2 border-blue-500" : "hover:bg-gray-50"
                           }`}
                         >
-                          {user.profile_picture ? (
-                            <img
-                              src={`http://localhost:8000${user.profile_picture}`}
-                              alt={user.username}
-                              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                            />
-                          ) : (
-                            <img
-                              src="/default_icon.jpg"
-                              alt={user.username}
-                              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                            />
-                          )}
+                                                      {user.profile_picture ? (
+                              <img
+                                src={`${config.apiUrl}${user.profile_picture}`}
+                                alt={user.username}
+                                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <img
+                                src={`${config.apiUrl}/public/default_icon.jpg`}
+                                alt={user.username}
+                                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                              />
+                            )}
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-gray-900 truncate">
                               {user.username}

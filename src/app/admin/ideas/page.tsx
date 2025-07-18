@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +90,7 @@ export default function AdminIdeas() {
   const fetchIdeas = async () => {
     try {
       setBackendError(null);
-      let url = "http://localhost:8000/api/v1/admin/ideas";
+      let url = `${config.apiUrl}/api/v1/admin/ideas`;
       if (statusFilter !== "all") {
         url += `?status_filter=${statusFilter}`;
       }
@@ -120,7 +121,7 @@ export default function AdminIdeas() {
 
   const fetchMarkets = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/markets/", {
+        const response = await fetch(`${config.apiUrl}/api/v1/markets/`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -137,7 +138,7 @@ export default function AdminIdeas() {
 
   const fetchIdeasStats = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/admin/ideas/stats", {
+        const response = await fetch(`${config.apiUrl}/api/v1/admin/ideas/stats`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -200,7 +201,7 @@ export default function AdminIdeas() {
         body.linked_market_id = parseInt(marketId);
       }
 
-      const response = await fetch(`http://localhost:8000/api/v1/admin/ideas/${ideaId}/status`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/admin/ideas/${ideaId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -551,7 +552,7 @@ export default function AdminIdeas() {
                     <div className="flex items-center gap-2">
                       {selectedIdea.submitted_by_user?.profile_picture ? (
                         <img
-                          src={`http://localhost:8000${selectedIdea.submitted_by_user.profile_picture}`}
+                          src={`${config.apiUrl}${selectedIdea.submitted_by_user.profile_picture}`}
                           alt={selectedIdea.submitted_by_user.username}
                           className="w-8 h-8 rounded-full object-cover"
                         />

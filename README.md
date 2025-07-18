@@ -113,30 +113,42 @@ sidebet/
 
 ## Environment Configuration
 
-### Frontend (.env.local)
+### Frontend Setup
+Create a `.env` file in the root directory:
 ```env
+# For local development (default)
 NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 ```
 
-### Backend (.env)
+### Backend Setup
+Create a `.env` file in the `backend` directory:
 ```env
-# Database
-DATABASE_URL=postgresql://username:password@localhost/sidebet
+# Database Config
+POSTGRES_SERVER=localhost
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=sidebet
 
 # Security
 SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+ACCESS_TOKEN_EXPIRE_MINUTES=11520
 
-# Email (optional)
+# API URLs
+API_BASE_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:3000
+
+# Email
 SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
-
-# Development
-DEBUG=True
 ```
+
+### Environment Variables Explained
+- **API_BASE_URL**: Backend server URL (used for static file serving)
+- **FRONTEND_URL**: Frontend URL (used for CORS and email links)
+- **NEXT_PUBLIC_***: Variables accessible in the browser (frontend only)
+- **Backward Compatibility**: If environment variables are empty, defaults to localhost URLs
 
 ## Database Setup
 

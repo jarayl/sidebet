@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -87,9 +88,9 @@ export default function AdminMarkets() {
     filterMarkets();
   }, [markets, searchTerm, statusFilter]);
 
-  const fetchMarkets = async () => {
-    try {
-      const response = await fetch("http://localhost:8000/api/v1/markets/", {
+      const fetchMarkets = async () => {
+      try {
+        const response = await fetch(`${config.apiUrl}/api/v1/markets/`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -178,7 +179,7 @@ export default function AdminMarkets() {
         submitFormData.append('image', imageFile);
       }
       
-      const response = await fetch("http://localhost:8000/api/v1/markets/", {
+      const response = await fetch(`${config.apiUrl}/api/v1/markets/`, {
         method: "POST",
         credentials: "include",
         body: submitFormData, // Don't set Content-Type header, let browser set it with boundary
@@ -223,7 +224,7 @@ export default function AdminMarkets() {
       
       console.log("Formatted submit data:", submitFormData);
       
-      const response = await fetch(`http://localhost:8000/api/v1/markets/${editingMarket.market_id}`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/markets/${editingMarket.market_id}`, {
         method: "PUT",
         credentials: "include",
         body: submitFormData, // Don't set Content-Type header, let browser set it with boundary
@@ -249,7 +250,7 @@ export default function AdminMarkets() {
 
   const handleUpdateMarketStatus = async (marketId: number, action: string, result?: string) => {
     try {
-      let url = `http://localhost:8000/api/v1/markets/${marketId}`;
+      let url = `${config.apiUrl}/api/v1/markets/${marketId}`;
       let body: any = {};
 
       if (action === "resolve") {
@@ -292,7 +293,7 @@ export default function AdminMarkets() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/markets/${marketId}/contracts/${contractId}/resolve`, {
+      const response = await fetch(`${config.apiUrl}/api/v1/markets/${marketId}/contracts/${contractId}/resolve`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -433,7 +434,7 @@ export default function AdminMarkets() {
           });
           // Set image preview for existing image
           if (market.image_url) {
-            setImagePreview(`http://localhost:8000${market.image_url}`);
+            setImagePreview(`${config.apiUrl}${market.image_url}`);
           } else {
             setImagePreview("");
           }
@@ -791,7 +792,7 @@ export default function AdminMarkets() {
                       <div className="flex items-center gap-3 mb-3">
                         {market.image_url ? (
                           <img
-                            src={`http://localhost:8000${market.image_url}`}
+                            src={`${config.apiUrl}${market.image_url}`}
                             alt={market.title}
                             className="w-12 h-12 rounded-lg object-cover border border-gray-200"
                           />

@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -39,7 +40,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/auth/register", {
+      const response = await fetch(`${config.apiUrl}/api/v1/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

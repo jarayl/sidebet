@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export function CreateIdeaModal({ isOpen, onClose }: CreateIdeaModalProps) {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/ideas/", {
+      const response = await fetch(`${config.apiUrl}/api/v1/ideas/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +25,7 @@ export default function VerifyEmailPage() {
 
   const verifyEmail = async (token: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/auth/verify-email/${token}`);
+      const response = await fetch(`${config.apiUrl}/api/v1/auth/verify-email/${token}`);
       const data = await response.json();
 
       if (!response.ok) {

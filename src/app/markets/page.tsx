@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
@@ -13,7 +14,7 @@ export default function MarketsPage() {
 
   useEffect(() => {
     // Fetch user data to ensure authentication
-    fetch("http://localhost:8000/api/v1/users/me", {
+      fetch(`${config.apiUrl}/api/v1/users/me`, {
       credentials: "include",
     })
       .then((res) => {
@@ -33,7 +34,7 @@ export default function MarketsPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:8000/api/v1/auth/logout", {
+        await fetch(`${config.apiUrl}/api/v1/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

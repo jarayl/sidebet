@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminNavbar } from "@/components/admin-navbar";
@@ -25,7 +26,7 @@ export default function AdminLayout({
   useEffect(() => {
     const checkAdminAccess = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/users/me", {
+        const response = await fetch(`${config.apiUrl}/api/v1/users/me`, {
           credentials: "include",
         });
 
