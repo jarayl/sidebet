@@ -189,8 +189,8 @@ SMTP_PASSWORD=your-app-password
 ### Common Issues
 
 1. **Tailwind Styling Error**
-   - Tailwind V4 absolutely LOVES to refuse to load/compile
-   - If at any point you run the app and all styling just dissapears (if the app looks terrible), delete the .next folder in your IDE and re-run the app. This should fix the styling issues.
+   - Tailwind V4 often fails to load/compile
+   - If component styling suddenly dissapears, delete the .next folder in your IDE and restart the app.
 
 ## License
 
